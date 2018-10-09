@@ -23,7 +23,8 @@ matrix:
 
 install:
   - "pip install --upgrade pip setuptools"
-  - "pip install pytest"
+  - "pip install coverage pytest-cov pytest"
 
 script:
-  - "py.test tests/*.py"
+  - "coverage run -m py.test tests/*.py"
+  - "coverage report"
