@@ -1,29 +1,32 @@
+# -*- encoding: utf-8
+
 import logging
 
+from . import compat
 import gearman.io
 import gearman.util
 from gearman.connection import GearmanConnection
-from gearman.constants import _DEBUG_MODE_
 from gearman.errors import ConnectionError, GearmanError, ServerUnavailable
-from gearman.job import GearmanJob, GearmanJobRequest
-from gearman import compat
+from gearman.job import GearmanJob
 
 gearman_logger = logging.getLogger(__name__)
 
+
 class DataEncoder(object):
     @classmethod
-    def encode(cls, encodable_object):
+    def encode(cls, encodable_object):  # pragma: no cover
         raise NotImplementedError
 
     @classmethod
-    def decode(cls, decodable_string):
+    def decode(cls, decodable_string):  # pragma: no cover
         raise NotImplementedError
+
 
 class NoopEncoder(DataEncoder):
     """Provide common object dumps for all communications over gearman"""
     @classmethod
     def _enforce_byte_string(cls, given_object):
-        if type(given_object) != str:
+        if not isinstance(given_object, compat.binary_type):
             raise TypeError("Expecting byte string, got %r" % type(given_object))
 
     @classmethod
@@ -35,6 +38,7 @@ class NoopEncoder(DataEncoder):
     def decode(cls, decodable_string):
         cls._enforce_byte_string(decodable_string)
         return decodable_string
+
 
 class GearmanConnectionManager(object):
     """Abstract base class for any Gearman-type client that needs to connect/listen to multiple connections
@@ -49,7 +53,6 @@ class GearmanConnectionManager(object):
     connection_class = GearmanConnection
 
     job_class = GearmanJob
-    job_request_class = GearmanJobRequest
 
     data_encoder = NoopEncoder
 
@@ -61,19 +64,28 @@ class GearmanConnectionManager(object):
         host_list = host_list or []
         for element in host_list:
             # old style host:port pair
-            if isinstance(element, str):
+            if isinstance(element, (str, tuple)):
                 self.add_connection(element)
             elif isinstance(element, dict):
-                if not all (k in element for k in ('host', 'port', 'keyfile', 'certfile', 'ca_certs')):
+                if not all(k in element for k in ('host', 'port', 'keyfile', 'certfile', 'ca_certs')):
                     raise GearmanError("Incomplete SSL connection definition")
                 self.add_ssl_connection(element['host'], element['port'],
                                         element['keyfile'], element['certfile'],
                                         element['ca_certs'])
+            else:
+                raise GearmanError(
+                    "Expected str, tuple or dict; got %r (type %s)" %
+                    (element, type(element))
+                )
 
         self.handler_to_connection_map = {}
         self.connection_to_handler_map = {}
 
         self.handler_initial_state = {}
+
+    def __repr__(self):
+        return '<%s connection_list=%r>' % (
+            type(self).__name__, self.connection_list)
 
     def shutdown(self):
         # Shutdown all our connections one by one
@@ -129,7 +141,7 @@ class GearmanConnectionManager(object):
         # a timeout of -1 when used with epoll will block until there
         # is activity. Select does not support negative timeouts, so this
         # is translated to a timeout=None when falling back to select
-        timeout = timeout or -1 
+        timeout = timeout or -1
 
         readable = set()
         writable = set()
@@ -191,13 +203,15 @@ class GearmanConnectionManager(object):
 
         any_activity = False
         callback_ok = callback_fxn(any_activity)
-        connection_ok = compat.any(current_connection.connected for current_connection in submitted_connections)
+        connection_ok = any(current_connection.connected for current_connection in submitted_connections)
         poller = gearman.io.get_connection_poller()
         if connection_ok:
-            self._register_connections_with_poller(submitted_connections, 
-                    poller)
-            connection_map = dict([(c.fileno(), c) for c in
-                submitted_connections if c.connected])
+            self._register_connections_with_poller(submitted_connections, poller)
+            connection_map = {
+                conn.fileno(): conn
+                for conn in submitted_connections
+                if conn.connected
+            }
 
         while connection_ok and callback_ok:
             time_remaining = stopwatch.get_time_remaining()
@@ -210,13 +224,13 @@ class GearmanConnectionManager(object):
             # Handle reads and writes and close all of the dead connections
             read_connections, write_connections, dead_connections = self.handle_connection_activity(read_connections, write_connections, dead_connections)
 
-            any_activity = compat.any([read_connections, write_connections, dead_connections])
+            any_activity = any([read_connections, write_connections, dead_connections])
 
             # Do not retry dead connections on the next iteration of the loop, as we closed them in handle_error
             submitted_connections -= dead_connections
 
             callback_ok = callback_fxn(any_activity)
-            connection_ok = compat.any(current_connection.connected for current_connection in submitted_connections)
+            connection_ok = any(current_connection.connected for current_connection in submitted_connections)
 
         poller.close()
 

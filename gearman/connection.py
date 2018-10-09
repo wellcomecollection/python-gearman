@@ -1,3 +1,5 @@
+# -*- encoding: utf-8
+
 import array
 import collections
 import logging
@@ -12,6 +14,7 @@ from gearman.protocol import GEARMAN_PARAMS_FOR_COMMAND, GEARMAN_COMMAND_TEXT_CO
     get_command_name, pack_binary_command, parse_binary_command, parse_text_command, pack_text_command
 
 gearman_logger = logging.getLogger(__name__)
+
 
 class GearmanConnection(object):
     """A connection between a client/worker and a server.  Can be used to reconnect (unlike a socket)
@@ -45,6 +48,16 @@ class GearmanConnection(object):
 
         self._reset_connection()
 
+    def __repr__(self):
+        return '%s(host=%r, port=%r, keyfile=%r, certfile=%r, ca_certs=%r)' % (
+            type(self).__name__,
+            self.gearman_host,
+            self.gearman_port,
+            self.keyfile,
+            self.certfile,
+            self.ca_certs
+        )
+
     def _reset_connection(self):
         """Reset the state of this connection"""
         self.connected = False
@@ -56,7 +69,7 @@ class GearmanConnection(object):
         self._is_server_side = None
 
         # Reset all our raw data buffers
-        self._incoming_buffer = array.array('c')
+        self._incoming_buffer = array.array("b")
         self._outgoing_buffer = ''
 
         # Toss all commands we may have sent or received
@@ -115,7 +128,7 @@ class GearmanConnection(object):
                                                 ssl_version=ssl.PROTOCOL_TLSv1)
 
             client_socket.connect((self.gearman_host, self.gearman_port))
-        except socket.error, socket_exception:
+        except socket.error as socket_exception:
             self.throw_exception(exception=socket_exception)
 
         self.set_socket(client_socket)
@@ -166,13 +179,11 @@ class GearmanConnection(object):
                 recv_buffer = self.gearman_socket.recv(bytes_to_read)
             except ssl.SSLError as e:
                 # if we would block, ignore the error
-                if e.errno == ssl.SSL_ERROR_WANT_READ:
-                    continue
-                elif e.errno == ssl.SSL_ERROR_WANT_WRITE:
+                if e.errno in [ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE]:
                     continue
                 else:
                     self.throw_exception(exception=e)
-            except socket.error, socket_exception:
+            except socket.error as socket_exception:
                 self.throw_exception(exception=socket_exception)
 
             if len(recv_buffer) == 0:
@@ -247,7 +258,7 @@ class GearmanConnection(object):
                     continue
                 else:
                     self.throw_exception(exception=e)
-            except socket.error, socket_exception:
+            except socket.error as socket_exception:
                 self.throw_exception(exception=socket_exception)
 
             if bytes_sent == 0:
@@ -292,7 +303,3 @@ class GearmanConnection(object):
 
         rewritten_message = "<%s:%d> %s" % (self.gearman_host, self.gearman_port, message)
         raise ConnectionError(rewritten_message)
-
-    def __repr__(self):
-        return ('<GearmanConnection %s:%d connected=%s>' %
-            (self.gearman_host, self.gearman_port, self.connected))

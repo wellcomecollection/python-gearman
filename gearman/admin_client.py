@@ -1,20 +1,27 @@
-import logging
-import time
+# -*- encoding: utf-8
 
-from gearman import util
+from __future__ import absolute_import
+
+import time
 
 from gearman.connection_manager import GearmanConnectionManager
 from gearman.admin_client_handler import GearmanAdminClientCommandHandler
-from gearman.errors import ConnectionError, InvalidAdminClientState, ServerUnavailable
-from gearman.protocol import GEARMAN_COMMAND_ECHO_RES, GEARMAN_COMMAND_ECHO_REQ, \
+from gearman.errors import (
+    ConnectionError,
+    GearmanError,
+    InvalidAdminClientState,
+    ServerUnavailable
+)
+from gearman.protocol import GEARMAN_COMMAND_ECHO_REQ, \
     GEARMAN_SERVER_COMMAND_STATUS, GEARMAN_SERVER_COMMAND_VERSION, GEARMAN_SERVER_COMMAND_WORKERS, \
     GEARMAN_SERVER_COMMAND_MAXQUEUE, GEARMAN_SERVER_COMMAND_SHUTDOWN, GEARMAN_SERVER_COMMAND_GETPID, \
     GEARMAN_SERVER_COMMAND_CANCEL_JOB, GEARMAN_SERVER_COMMAND_SHOW_JOBS, GEARMAN_SERVER_COMMAND_SHOW_UNIQUE_JOBS
+from gearman.util import unlist
 
-gearman_logger = logging.getLogger(__name__)
 
 ECHO_STRING = "ping? pong!"
 DEFAULT_ADMIN_CLIENT_TIMEOUT = 10.0
+
 
 class GearmanAdminClient(GearmanConnectionManager):
     """GearmanAdminClient :: Interface to send/receive administrative commands to a Gearman server
@@ -30,7 +37,15 @@ class GearmanAdminClient(GearmanConnectionManager):
         super(GearmanAdminClient, self).__init__(host_list=host_list)
         self.poll_timeout = poll_timeout
 
-        self.current_connection = util.unlist(self.connection_list)
+        # TODO: We could change the API here so this class only allows
+        # passing a single host, not a list.
+        try:
+            self.current_connection = unlist(self.connection_list)
+        except ValueError:
+            raise GearmanError(
+                "Only pass a single host to the constructor of %s" %
+                type(self).__name__)
+
         self.current_handler = None
 
     def establish_admin_connection(self):
@@ -91,6 +106,7 @@ class GearmanAdminClient(GearmanConnectionManager):
 
     def wait_until_server_responds(self, expected_type):
         current_handler = self.current_handler
+
         def continue_while_no_response(any_activity):
             return (not current_handler.response_ready)
 
@@ -113,7 +129,7 @@ class GearmanAdminClient(GearmanConnectionManager):
     def cancel_job(self, handle):
         """Cancels a job"""
         self.establish_admin_connection()
-        self.current_handler.send_text_command(GEARMAN_SERVER_COMMAND_CANCEL_JOB+" "+handle)
+        self.current_handler.send_text_command(GEARMAN_SERVER_COMMAND_CANCEL_JOB + " " + handle)
         return self.wait_until_server_responds(GEARMAN_SERVER_COMMAND_CANCEL_JOB)
 
     def get_jobs(self):

@@ -8,6 +8,7 @@ import time
 
 from gearman.constants import DEFAULT_GEARMAN_PORT
 
+
 class Stopwatch(object):
     """Timer class that keeps track of time remaining"""
     def __init__(self, time_remaining):
@@ -34,18 +35,20 @@ class Stopwatch(object):
 
         return bool(time_comparison < self.stop_time)
 
+
 def disambiguate_server_parameter(hostport_tuple):
     """Takes either a tuple of (address, port) or a string of 'address:port' and disambiguates them for us"""
     if type(hostport_tuple) is tuple:
         gearman_host, gearman_port = hostport_tuple
     elif ':' in hostport_tuple:
         gearman_host, gearman_possible_port = hostport_tuple.split(':')
-        gearman_port = int(gearman_possible_port)
+        gearman_port = gearman_possible_port
     else:
         gearman_host = hostport_tuple
         gearman_port = DEFAULT_GEARMAN_PORT
 
-    return gearman_host, gearman_port
+    return gearman_host, int(gearman_port)
+
 
 def select(rlist, wlist, xlist, timeout=None):
     """Behave similar to select.select, except ignoring certain types of exceptions"""
@@ -59,12 +62,13 @@ def select(rlist, wlist, xlist, timeout=None):
 
     try:
         rd_list, wr_list, ex_list = select_lib.select(*select_args)
-    except select_lib.error, exc:
+    except select_lib.error as exc:
         # Ignore interrupted system call, reraise anything else
         if exc[0] != errno.EINTR:
             raise
 
     return rd_list, wr_list, ex_list
+
 
 def unlist(given_list):
     """Convert the (possibly) single item list into a single item"""
