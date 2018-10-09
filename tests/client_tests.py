@@ -409,7 +409,6 @@ class ClientCommandHandlerStateMachineTest(_GearmanAbstractTest):
         # Test WORK_STATUS
         self.command_handler.recv_command(GEARMAN_COMMAND_WORK_STATUS, job_handle=job_handle, numerator=0, denominator=1)
 
-        self.assertEqual(current_request.status_updates.popleft(), (0, 1))
         self.assertEqual(current_request.state, JOB_CREATED)
 
     def test_work_complete(self):

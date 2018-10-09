@@ -53,20 +53,6 @@ class GearmanJobRequest(object):
         self.handle = None
 
     @property
-    def status_updates(self):
-        """Deprecated since 2.0.1, removing in next major release"""
-        output_queue = collections.deque()
-        if self.status:
-            output_queue.append((self.status.get('numerator', 0), self.status.get('denominator', 0)))
-
-        return output_queue
-
-    @property
-    def server_status(self):
-        """Deprecated since 2.0.1, removing in next major release"""
-        return self.status
-
-    @property
     def job(self):
         return self.gearman_job
 
