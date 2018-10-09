@@ -1,0 +1,29 @@
+sudo: false
+language: python
+
+branches:
+  only:
+    - master
+
+cache:
+  directories:
+    - $HOME/.cache/pip
+
+matrix:
+  include:
+    - python: "2.7"
+    - python: "3.4"
+    - python: "3.5"
+    - python: "3.6"
+
+  allow_failures:
+    - python: "3.4"
+    - python: "3.5"
+    - python: "3.6"
+
+install:
+  - "pip install --upgrade pip setuptools"
+  - "pip install pytest"
+
+script:
+  - "py.test tests/*.py"
