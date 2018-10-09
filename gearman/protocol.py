@@ -1,4 +1,5 @@
 import struct
+from .compat import itervalues
 from gearman.constants import PRIORITY_NONE, PRIORITY_LOW, PRIORITY_HIGH
 from gearman.errors import ProtocolError
 from gearman import compat
@@ -243,7 +244,7 @@ def pack_binary_command(cmd_type, cmd_args, is_response=False):
 
     # !NOTE! str should be replaced with bytes in Python 3.x
     # We will iterate in ORDER and str all our command arguments
-    if compat.any(type(param_value) != str for param_value in cmd_args.itervalues()):
+    if compat.any(type(param_value) != str for param_value in itervalues(cmd_args.itervalues())):
         raise ProtocolError('Received non-binary arguments: %r' % cmd_args)
 
     data_items = [cmd_args[param] for param in expected_cmd_params]
