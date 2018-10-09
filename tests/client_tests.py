@@ -444,6 +444,3 @@ class ClientCommandHandlerStateMachineTest(_GearmanAbstractTest):
         self.assertTrue(current_request.status['running'])
         self.assertEqual(current_request.status['numerator'], 0)
         self.assertEqual(current_request.status['denominator'], 1)
-
-if __name__ == '__main__':
-    unittest.main()
