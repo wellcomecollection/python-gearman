@@ -1,5 +1,10 @@
 [run]
 branch = True
+include =
+    gearman/*.py
+    tests/*.py
+omit =
+    **/.virtualenvs/*
 
 [report]
 show_missing = True
