@@ -147,7 +147,7 @@ class ClientTest(_GearmanAbstractTest):
 
     def test_multiple_fg_job_submission(self):
         submitted_job_count = 5
-        expected_job_list = [self.generate_job() for _ in xrange(submitted_job_count)]
+        expected_job_list = [self.generate_job() for _ in range(submitted_job_count)]
         def mark_jobs_created(rx_conns, wr_conns, ex_conns):
             for current_job in expected_job_list:
                 self.command_handler.recv_command(GEARMAN_COMMAND_JOB_CREATED, job_handle=current_job.handle)
