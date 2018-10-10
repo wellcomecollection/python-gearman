@@ -204,6 +204,10 @@ class CommandHandlerStateMachineTest(_GearmanAbstractTest):
             {"handle": "bar", "queued": 4, "canceled": 5, "enabled": 6},
         )
 
+    def test_recv_server_response_without_command(self):
+        with pytest.raises(InvalidAdminClientState, match='Received an unexpected server response'):
+            self.recv_server_response(b'123')
+
     def send_server_command(self, expected_command):
         self.command_handler.send_text_command(expected_command)
         expected_line = "%s\n" % expected_command
