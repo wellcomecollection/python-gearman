@@ -56,7 +56,7 @@ class ClientTest(_GearmanAbstractTest):
 
         # When we first create our request, our client shouldn't know anything about it
         current_request = self.generate_job_request(submitted=False, accepted=False)
-        self.failIf(current_request in self.connection_manager.request_to_rotating_connection_queue)
+        assert current_request not in self.connection_manager.request_to_rotating_connection_queue
 
         # Make sure that when we start up, we get our good connection
         chosen_connection = self.connection_manager.establish_request_connection(current_request)
