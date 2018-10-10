@@ -11,8 +11,15 @@ if PY3:
 
     def array_to_bytes(arr):
         return arr.tobytes()
+
+    def itervalues(d):
+        return d.values()
+
 else:
     binary_type = str
 
     def array_to_bytes(arr):
         return arr.tostring()
+
+    def itervalues(d):
+        return d.itervalues()

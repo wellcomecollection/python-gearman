@@ -156,13 +156,6 @@ GEARMAN_SERVER_COMMAND_SHOW_UNIQUE_JOBS = 'show unique jobs'
 GEARMAN_SERVER_COMMAND_CANCEL_JOB = 'cancel job'
 
 
-def itervalues(d):
-    try:
-        return d.itervalues()
-    except AttributeError:
-        return d.values()
-
-
 def get_command_name(cmd_type):
     return GEARMAN_COMMAND_TO_NAME.get(cmd_type, cmd_type)
 
@@ -253,7 +246,7 @@ def pack_binary_command(cmd_type, cmd_args, is_response=False):
 
     if not all(
         isinstance(param_value, compat.binary_type)
-        for param_value in itervalues(cmd_args)
+        for param_value in compat.itervalues(cmd_args)
     ):
         raise ProtocolError('Received non-binary arguments: %r' % cmd_args)
 
