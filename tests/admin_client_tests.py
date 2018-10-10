@@ -187,6 +187,23 @@ class CommandHandlerStateMachineTest(_GearmanAbstractTest):
         with pytest.raises(ProtocolError, match="Received 3 tokens, expected 4 tokens"):
             self.recv_server_response('1\t2\t3')
 
+    def test_show_jobs(self):
+        self.send_server_command(GEARMAN_SERVER_COMMAND_SHOW_JOBS)
+
+        self.recv_server_response('foo\t1\t2\t3')
+        self.recv_server_response('bar\t4\t5\t6')
+
+        # Pop prematurely
+        with pytest.raises(InvalidAdminClientState):
+            self.pop_response(GEARMAN_SERVER_COMMAND_SHOW_JOBS)
+
+        self.recv_server_response(".")
+        server_response = self.pop_response(GEARMAN_SERVER_COMMAND_SHOW_JOBS)
+        assert server_response == (
+            {"handle": "foo", "queued": 1, "canceled": 2, "enabled": 3},
+            {"handle": "bar", "queued": 4, "canceled": 5, "enabled": 6},
+        )
+
     def send_server_command(self, expected_command):
         self.command_handler.send_text_command(expected_command)
         expected_line = "%s\n" % expected_command

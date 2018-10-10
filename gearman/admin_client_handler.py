@@ -189,11 +189,12 @@ class GearmanAdminClientCommandHandler(GearmanCommandHandler):
         # Label our fields and make the results Python friendly
         handle, queued_count, canceled_count, enabled_count = split_tokens
 
-        job_dict = {}
-        job_dict['handle'] = handle
-        job_dict['queued'] = int(queued_count)
-        job_dict['canceled'] = int(canceled_count)
-        job_dict['enabled'] = int(enabled_count)
+        job_dict = {
+            "handle": handle,
+            "queued": int(queued_count),
+            "canceled": int(canceled_count),
+            "enabled": int(enabled_count),
+        }
         self._status_response.append(job_dict)
         return True
 
