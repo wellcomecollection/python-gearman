@@ -2,6 +2,8 @@
 
 import collections
 
+import pytest
+
 from gearman.worker import GearmanWorker
 from gearman.worker_handler import GearmanWorkerCommandHandler
 
@@ -114,16 +116,17 @@ class WorkerTest(_GearmanAbstractWorkerTest):
 
         # The only alive connections should be the ones that ultimately be connection.connected
         alive_connections = self.connection_manager.establish_worker_connections()
-        self.assertTrue(good_connection in alive_connections)
-        self.assertTrue(failed_then_retried_connection in alive_connections)
-        self.assertFalse(failed_connection in alive_connections)
+        assert good_connection in alive_connections
+        assert failed_then_retried_connection in alive_connections
+        assert failed_connection not in alive_connections
 
     def test_establish_worker_connections_dead(self):
         self.connection_manager.connection_list = []
         self.connection_manager.command_handlers = {}
 
         # We have no connections so there will never be any work to do
-        self.assertRaises(ServerUnavailable, self.connection_manager.work)
+        with pytest.raises(ServerUnavailable):
+            self.connection_manager.work()
 
         # We were started with a dead connection, make sure we bail again
         dead_connection = MockGearmanConnection()
@@ -131,7 +134,8 @@ class WorkerTest(_GearmanAbstractWorkerTest):
         dead_connection.connected = False
         self.connection_manager.connection_list = [dead_connection]
 
-        self.assertRaises(ServerUnavailable, self.connection_manager.work)
+        with pytest.raises(ServerUnavailable):
+            self.connection_manager.work()
 
 
 class WorkerCommandHandlerInterfaceTest(_GearmanAbstractWorkerTest):

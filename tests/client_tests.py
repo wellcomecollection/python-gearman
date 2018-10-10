@@ -2,6 +2,8 @@
 
 import collections
 
+import pytest
+
 from gearman.client import GearmanClient
 from gearman.client_handler import GearmanClientCommandHandler
 
@@ -69,9 +71,9 @@ class ClientTest(_GearmanAbstractTest):
         chosen_connection = self.connection_manager.establish_request_connection(current_request)
         assert chosen_connection == good_connection
 
-        self.assertFalse(failed_connection.connected)
-        self.assertFalse(failed_then_retried_connection.connected)
-        self.assertTrue(good_connection.connected)
+        assert not failed_connection.connected
+        assert not failed_then_retried_connection.connected
+        assert good_connection.connected
 
         # No state changed so we should still go to the correct connection
         chosen_connection = self.connection_manager.establish_request_connection(current_request)
@@ -87,9 +89,9 @@ class ClientTest(_GearmanAbstractTest):
         # Make sure we rotate good_connection and failed_connection out
         chosen_connection = self.connection_manager.establish_request_connection(current_request)
         assert chosen_connection == failed_then_retried_connection
-        self.assertFalse(failed_connection.connected)
-        self.assertTrue(failed_then_retried_connection.connected)
-        self.assertFalse(good_connection.connected)
+        assert not failed_connection.connected
+        assert failed_then_retried_connection.connected
+        assert not good_connection.connected
 
     def test_establish_request_connection_dead(self):
         self.connection_manager.connection_list = []
@@ -98,7 +100,8 @@ class ClientTest(_GearmanAbstractTest):
         current_request = self.generate_job_request(submitted=False, accepted=False)
 
         # No connections == death
-        self.assertRaises(ServerUnavailable, self.connection_manager.establish_request_connection, current_request)
+        with pytest.raises(ServerUnavailable):
+            self.connection_manager.establish_request_connection(current_request)
 
         # Spin up a bunch of imaginary gearman connections
         failed_connection = MockGearmanConnection()
@@ -106,7 +109,8 @@ class ClientTest(_GearmanAbstractTest):
         self.connection_manager.connection_list.append(failed_connection)
 
         # All failed connections == death
-        self.assertRaises(ServerUnavailable, self.connection_manager.establish_request_connection, current_request)
+        with pytest.raises(ServerUnavailable):
+            self.connection_manager.establish_request_connection(current_request)
 
     def test_auto_retry_behavior(self):
         current_request = self.generate_job_request(submitted=False, accepted=False)
@@ -116,9 +120,9 @@ class ClientTest(_GearmanAbstractTest):
                 self.connection_manager.current_failures += 1
 
                 # We're going to down this connection and reset state
-                self.assertTrue(self.connection.connected)
+                assert self.connection.connected
                 self.connection_manager.handle_error(self.connection)
-                self.assertFalse(self.connection.connected)
+                assert not self.connection.connected
 
                 # We're then going to IMMEDIATELY pull this connection back up
                 # So we don't bail out of the "self.connection_manager.poll_connections_until_stopped" loop
@@ -147,7 +151,8 @@ class ClientTest(_GearmanAbstractTest):
         current_request.max_connection_attempts = self.connection_manager.expected_failures
         current_request.state = JOB_UNKNOWN
 
-        self.assertRaises(ExceededConnectionAttempts, self.connection_manager.wait_until_jobs_accepted, [current_request])
+        with pytest.raises(ExceededConnectionAttempts):
+            self.connection_manager.wait_until_jobs_accepted([current_request])
         assert current_request.state == JOB_UNKNOWN
         assert current_request.connection_attempts == current_request.max_connection_attempts
 
@@ -175,7 +180,7 @@ class ClientTest(_GearmanAbstractTest):
             assert not current_request.background
             assert current_request.state == JOB_CREATED
 
-            self.assertFalse(current_request.complete)
+            assert not current_request.complete
 
     def test_single_bg_job_submission(self):
         expected_job = self.generate_job()
@@ -194,7 +199,7 @@ class ClientTest(_GearmanAbstractTest):
         assert job_request.background
         assert job_request.state == JOB_CREATED
 
-        self.assertTrue(job_request.complete)
+        assert job_request.complete
 
     def test_single_fg_job_submission_timeout(self):
         expected_job = self.generate_job()
@@ -209,8 +214,8 @@ class ClientTest(_GearmanAbstractTest):
         assert not job_request.background
         assert job_request.state == JOB_PENDING
 
-        self.assertFalse(job_request.complete)
-        self.assertTrue(job_request.timed_out)
+        assert not job_request.complete
+        assert job_request.timed_out
 
     def test_single_fg_job_submission_timeout_unspecified_unique(self):
         expected_job = self.generate_job()
@@ -306,11 +311,11 @@ class ClientTest(_GearmanAbstractTest):
         job_request = self.connection_manager.get_job_status(single_request)
         request_status = job_request.status
         assert request_status
-        self.assertFalse(request_status['known'])
-        self.assertFalse(request_status['running'])
+        assert not request_status['known']
+        assert not request_status['running']
         assert request_status['numerator'] == 0
         assert request_status['denominator'] == 1
-        self.assertFalse(job_request.timed_out)
+        assert not job_request.timed_out
         # self.assert_(current_handle not in self.command_handler.handle_to_request_map)
 
     def test_get_job_status_timeout(self):
@@ -322,7 +327,7 @@ class ClientTest(_GearmanAbstractTest):
         self.connection_manager.handle_connection_activity = retrieve_status_timeout
 
         job_request = self.connection_manager.get_job_status(single_request, poll_timeout=0.01)
-        self.assertTrue(job_request.timed_out)
+        assert job_request.timed_out
 
 
 class ClientCommandHandlerInterfaceTest(_GearmanAbstractTest):
@@ -386,7 +391,11 @@ class ClientCommandHandlerStateMachineTest(_GearmanAbstractTest):
         assert self.command_handler.requests_awaiting_handles == collections.deque()
 
         # Make sure we bail cuz we have an empty queue
-        self.assertRaises(InvalidClientState, self.command_handler.recv_command, GEARMAN_COMMAND_JOB_CREATED, job_handle=None)
+        with pytest.raises(InvalidClientState):
+            self.command_handler.recv_command(
+                GEARMAN_COMMAND_JOB_CREATED,
+                job_handle=None
+            )
 
     def test_required_state_pending(self):
         current_request = self.generate_job_request(submitted=False, accepted=False)
@@ -400,7 +409,11 @@ class ClientCommandHandlerStateMachineTest(_GearmanAbstractTest):
             # We only want to check the state of request... not die if we don't have any pending requests
             self.command_handler.requests_awaiting_handles.append(current_request)
 
-            self.assertRaises(InvalidClientState, self.command_handler.recv_command, GEARMAN_COMMAND_JOB_CREATED, job_handle=new_handle)
+            with pytest.raises(InvalidClientState):
+                self.command_handler.recv_command(
+                    GEARMAN_COMMAND_JOB_CREATED,
+                    job_handle=new_handle
+                )
 
     def test_required_state_queued(self):
         current_request = self.generate_job_request()
@@ -413,15 +426,40 @@ class ClientCommandHandlerStateMachineTest(_GearmanAbstractTest):
             current_request.state = bad_state
 
             # All these commands expect to be in JOB_CREATED
-            self.assertRaises(InvalidClientState, self.command_handler.recv_command, GEARMAN_COMMAND_WORK_DATA, job_handle=job_handle, data=new_data)
+            with pytest.raises(InvalidClientState):
+                self.command_handler.recv_command(
+                    GEARMAN_COMMAND_WORK_DATA,
+                    job_handle=job_handle,
+                    data=new_data
+                )
 
-            self.assertRaises(InvalidClientState, self.command_handler.recv_command, GEARMAN_COMMAND_WORK_WARNING, job_handle=job_handle, data=new_data)
+            with pytest.raises(InvalidClientState):
+                self.command_handler.recv_command(
+                    GEARMAN_COMMAND_WORK_WARNING,
+                    job_handle=job_handle,
+                    data=new_data
+                )
 
-            self.assertRaises(InvalidClientState, self.command_handler.recv_command, GEARMAN_COMMAND_WORK_STATUS, job_handle=job_handle, numerator=0, denominator=1)
+            with pytest.raises(InvalidClientState):
+                self.command_handler.recv_command(
+                    GEARMAN_COMMAND_WORK_STATUS,
+                    job_handle=job_handle,
+                    numerator=0,
+                    denominator=1
+                )
 
-            self.assertRaises(InvalidClientState, self.command_handler.recv_command, GEARMAN_COMMAND_WORK_COMPLETE, job_handle=job_handle, data=new_data)
+            with pytest.raises(InvalidClientState):
+                self.command_handler.recv_command(
+                    GEARMAN_COMMAND_WORK_COMPLETE,
+                    job_handle=job_handle,
+                    data=new_data
+                )
 
-            self.assertRaises(InvalidClientState, self.command_handler.recv_command, GEARMAN_COMMAND_WORK_FAIL, job_handle=job_handle)
+            with pytest.raises(InvalidClientState):
+                self.command_handler.recv_command(
+                    GEARMAN_COMMAND_WORK_FAIL,
+                    job_handle=job_handle
+                )
 
     def test_in_flight_work_updates(self):
         current_request = self.generate_job_request()
@@ -442,7 +480,7 @@ class ClientCommandHandlerStateMachineTest(_GearmanAbstractTest):
         # Test WORK_STATUS
         self.command_handler.recv_command(GEARMAN_COMMAND_WORK_STATUS, job_handle=job_handle, numerator=0, denominator=1)
 
-        self.assertEqual(current_request.status_updates.popleft(), (0, 1))
+        assert current_request.status_updates.popleft() == (0, 1)
         assert current_request.state == JOB_CREATED
 
     def test_work_complete(self):
@@ -468,12 +506,12 @@ class ClientCommandHandlerStateMachineTest(_GearmanAbstractTest):
 
         job_handle = current_request.job.handle
 
-        self.assertEqual(current_request.status, {})
+        assert current_request.status == {}
 
         self.command_handler.recv_command(GEARMAN_COMMAND_STATUS_RES, job_handle=job_handle, known='1', running='1', numerator='0', denominator='1')
 
         assert current_request.status['handle'] == job_handle
-        self.assertTrue(current_request.status['known'])
-        self.assertTrue(current_request.status['running'])
+        assert current_request.status['known']
+        assert current_request.status['running']
         assert current_request.status['numerator'] == 0
         assert current_request.status['denominator'] == 1

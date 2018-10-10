@@ -97,10 +97,9 @@ class _GearmanAbstractTest(unittest.TestCase):
         return current_job.to_dict()
 
     def generate_job_request(self, priority=PRIORITY_NONE, background=False):
-        job_handle = str(random.random())
         current_job = self.job_class(
             connection=self.connection,
-            handle=job_handle,
+            handle=random_bytes(),
             task=b'__test_ability__',
             unique=random_bytes(),
             data=random_bytes()
@@ -111,25 +110,25 @@ class _GearmanAbstractTest(unittest.TestCase):
             background=background
         )
 
-        self.assertEqual(current_request.state, JOB_UNKNOWN)
+        assert current_request.state == JOB_UNKNOWN
 
         return current_request
 
     def assert_jobs_equal(self, job_actual, job_expected):
         # Validates that GearmanJobs are essentially equal
-        self.assertEqual(job_actual.handle, job_expected.handle)
-        self.assertEqual(job_actual.task, job_expected.task)
-        self.assertEqual(job_actual.unique, job_expected.unique)
-        self.assertEqual(job_actual.data, job_expected.data)
+        assert job_actual.handle == job_expected.handle
+        assert job_actual.task == job_expected.task
+        assert job_actual.unique == job_expected.unique
+        assert job_actual.data == job_expected.data
 
     def assert_sent_command(self, expected_cmd_type, **expected_cmd_args):
         # Make sure any commands we're passing through the CommandHandler gets properly passed through to the client base
         client_cmd_type, client_cmd_args = self.connection._outgoing_commands.popleft()
         self.assert_commands_equal(client_cmd_type, expected_cmd_type)
-        self.assertEqual(client_cmd_args, expected_cmd_args)
+        assert client_cmd_args == expected_cmd_args
 
     def assert_no_pending_commands(self):
-        self.assertEqual(self.connection._outgoing_commands, collections.deque())
+        assert self.connection._outgoing_commands == collections.deque()
 
     def assert_commands_equal(self, cmd_type_actual, cmd_type_expected):
-        self.assertEqual(get_command_name(cmd_type_actual), get_command_name(cmd_type_expected))
+        assert get_command_name(cmd_type_actual) == get_command_name(cmd_type_expected)
