@@ -56,15 +56,15 @@ class ClientTest(_GearmanAbstractTest):
 
         # When we first create our request, our client shouldn't know anything about it
         current_request = self.generate_job_request(submitted=False, accepted=False)
-        self.failIf(current_request in self.connection_manager.request_to_rotating_connection_queue)
+        assert current_request not in self.connection_manager.request_to_rotating_connection_queue
 
         # Make sure that when we start up, we get our good connection
         chosen_connection = self.connection_manager.establish_request_connection(current_request)
         self.assertEqual(chosen_connection, good_connection)
 
-        self.assertFalse(failed_connection.connected)
-        self.assertFalse(failed_then_retried_connection.connected)
-        self.assertTrue(good_connection.connected)
+        assert not failed_connection.connected
+        assert not failed_then_retried_connection.connected
+        assert good_connection.connected
 
         # No state changed so we should still go to the correct connection
         chosen_connection = self.connection_manager.establish_request_connection(current_request)
@@ -117,7 +117,7 @@ class ClientTest(_GearmanAbstractTest):
                 # So we don't bail out of the "self.connection_manager.poll_connections_until_stopped" loop
                 self.connection_manager.establish_connection(self.connection)
             else:
-                self.assertEquals(current_request.state, JOB_PENDING)
+                self.assertEqual(current_request.state, JOB_PENDING)
                 self.command_handler.recv_command(GEARMAN_COMMAND_JOB_CREATED, job_handle=current_request.job.handle)
 
             return rx_conns, wr_conns, ex_conns
@@ -132,8 +132,8 @@ class ClientTest(_GearmanAbstractTest):
         current_request.state = JOB_UNKNOWN
 
         accepted_jobs = self.connection_manager.wait_until_jobs_accepted([current_request])
-        self.assertEquals(current_request.state, JOB_CREATED)
-        self.assertEquals(current_request.connection_attempts, current_request.max_connection_attempts)
+        self.assertEqual(current_request.state, JOB_CREATED)
+        self.assertEqual(current_request.connection_attempts, current_request.max_connection_attempts)
 
         # Second pass should fail as we JUST exceed our max attempts
         self.connection_manager.current_failures = current_request.connection_attempts = 0
@@ -141,8 +141,8 @@ class ClientTest(_GearmanAbstractTest):
         current_request.state = JOB_UNKNOWN
 
         self.assertRaises(ExceededConnectionAttempts, self.connection_manager.wait_until_jobs_accepted, [current_request])
-        self.assertEquals(current_request.state, JOB_UNKNOWN)
-        self.assertEquals(current_request.connection_attempts, current_request.max_connection_attempts)
+        self.assertEqual(current_request.state, JOB_UNKNOWN)
+        self.assertEqual(current_request.connection_attempts, current_request.max_connection_attempts)
 
     def test_multiple_fg_job_submission(self):
         submitted_job_count = 5

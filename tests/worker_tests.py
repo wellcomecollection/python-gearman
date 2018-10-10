@@ -61,7 +61,7 @@ class WorkerTest(_GearmanAbstractWorkerTest):
         self.failUnless('fake_callback_one' in self.connection_manager.worker_abilities)
         self.failIf('fake_callback_two' in self.connection_manager.worker_abilities)
         self.assertEqual(self.connection_manager.worker_abilities['fake_callback_one'], fake_callback_one)
-        self.assertEqual(self.command_handler._handler_abilities, ['fake_callback_one'])
+        assert list(self.command_handler._handler_abilities) == ['fake_callback_one']
 
         # Register another callback and make sure the command_handler sees the same functions
         self.connection_manager.register_task('fake_callback_two', fake_callback_two)
@@ -69,14 +69,14 @@ class WorkerTest(_GearmanAbstractWorkerTest):
         self.failUnless('fake_callback_two' in self.connection_manager.worker_abilities)
         self.assertEqual(self.connection_manager.worker_abilities['fake_callback_one'], fake_callback_one)
         self.assertEqual(self.connection_manager.worker_abilities['fake_callback_two'], fake_callback_two)
-        self.assertEqual(self.command_handler._handler_abilities, ['fake_callback_one', 'fake_callback_two'])
+        assert list(self.command_handler._handler_abilities) == ['fake_callback_one', 'fake_callback_two']
 
         # Unregister a callback and make sure the command_handler sees the same functions
         self.connection_manager.unregister_task('fake_callback_one')
-        self.failIf('fake_callback_one' in self.connection_manager.worker_abilities)
-        self.failUnless('fake_callback_two' in self.connection_manager.worker_abilities)
-        self.assertEqual(self.connection_manager.worker_abilities['fake_callback_two'], fake_callback_two)
-        self.assertEqual(self.command_handler._handler_abilities, ['fake_callback_two'])
+        assert 'fake_callback_one' not in self.connection_manager.worker_abilities
+        assert 'fake_callback_two' in self.connection_manager.worker_abilities
+        assert connection_manager.worker_abilities['fake_callback_two'] == fake_callback_two
+        assert list(self.command_handler._handler_abilities) == ['fake_callback_two']
 
     def test_setting_client_id(self):
         new_client_id = 'HELLO'

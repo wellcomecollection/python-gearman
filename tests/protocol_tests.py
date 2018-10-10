@@ -216,31 +216,36 @@ class ProtocolBinaryCommandsTest(unittest.TestCase):
         packed_command_buffer = protocol.pack_binary_command(cmd_type, cmd_args)
         self.assertEquals(packed_command_buffer, expected_command_buffer)
 
+
+def _create_array(s):
+    return array.array("b", [ord(char) for char in s])
+
+
 class ProtocolTextCommandsTest(unittest.TestCase):
 	#######################
     # Begin parsing tests #
     #######################
     def test_parsing_errors(self):
-        received_data = array.array("c", "Hello\x00there\n")
+        received_data = _create_array("Hello\x00there\n")
         self.assertRaises(ProtocolError, protocol.parse_text_command, received_data)
 
     def test_parsing_without_enough_data(self):
-        received_data = array.array("c", "Hello there")
+        received_data = _create_array("Hello there")
         cmd_type, cmd_response, cmd_len = protocol.parse_text_command(received_data)
         self.assertEquals(cmd_type, None)
         self.assertEquals(cmd_response, None)
         self.assertEquals(cmd_len, 0)
 
     def test_parsing_single_line(self):
-        received_data = array.array("c", "Hello there\n")
+        received_data = _create_array("Hello there\n")
         cmd_type, cmd_response, cmd_len = protocol.parse_text_command(received_data)
         self.assertEquals(cmd_type, protocol.GEARMAN_COMMAND_TEXT_COMMAND)
         self.assertEquals(cmd_response, dict(raw_text=received_data.tostring().strip()))
         self.assertEquals(cmd_len, len(received_data))
 
     def test_parsing_multi_line(self):
-        sentence_one = array.array("c", "Hello there\n")
-        sentence_two = array.array("c", "My name is bob\n")
+        sentence_one = _create_array("Hello there\n")
+        sentence_two = _create_array("My name is bob\n")
         received_data = sentence_one + sentence_two
 
         cmd_type, cmd_response, cmd_len = protocol.parse_text_command(received_data)
