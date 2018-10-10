@@ -287,7 +287,6 @@ class TestGearmanAdminClientCommandHandler:
 
     def test_decodes_data_correctly(self):
         assert self.command_handler.decode_data(b"123") == b"123"
-        assert 0
 
     def test_encodes_data_correctly(self):
         assert self.command_handler.encode_data(b"123") == b"123"
