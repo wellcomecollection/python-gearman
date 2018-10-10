@@ -1,6 +1,7 @@
+# -*- encoding: utf-8
+
 import collections
 import random
-import unittest
 
 from gearman.client import GearmanClient
 from gearman.client_handler import GearmanClientCommandHandler
@@ -445,6 +446,3 @@ class ClientCommandHandlerStateMachineTest(_GearmanAbstractTest):
         self.assertTrue(current_request.status['running'])
         self.assertEqual(current_request.status['numerator'], 0)
         self.assertEqual(current_request.status['denominator'], 1)
-
-if __name__ == '__main__':
-    unittest.main()

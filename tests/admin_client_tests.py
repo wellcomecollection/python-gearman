@@ -1,4 +1,4 @@
-import unittest
+# -*- encoding: utf-8
 
 from gearman.admin_client import GearmanAdminClient, ECHO_STRING
 from gearman.admin_client_handler import GearmanAdminClientCommandHandler
@@ -148,6 +148,3 @@ class CommandHandlerStateMachineTest(_GearmanAbstractTest):
         self.assertEquals(expected_command, server_cmd)
 
         return server_response
-
-if __name__ == '__main__':
-    unittest.main()

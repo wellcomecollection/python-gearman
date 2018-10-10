@@ -310,7 +310,3 @@ class GearmanCommandHandlerTest(_GearmanAbstractTest):
         self.assertEqual(handler_cmd_args, expected_cmd_args)
 
         super(GearmanCommandHandlerTest, self).assert_sent_command(expected_cmd_type, **expected_cmd_args)
-
-
-if __name__ == '__main__':
-    unittest.main()

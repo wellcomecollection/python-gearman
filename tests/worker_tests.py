@@ -1,6 +1,7 @@
+# -*- encoding: utf-8
+
 import collections
 from gearman import compat
-import unittest
 
 from gearman.worker import GearmanWorker
 from gearman.worker_handler import GearmanWorkerCommandHandler
@@ -359,7 +360,3 @@ class WorkerCommandHandlerStateMachineTest(_GearmanAbstractWorkerTest):
     def assert_job_lock(self, is_locked):
         expected_value = (is_locked and self.command_handler) or None
         self.assertEqual(self.connection_manager.command_handler_holding_job_lock, expected_value)
-
-if __name__ == '__main__':
-    unittest.main()
-
