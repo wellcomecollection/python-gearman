@@ -87,7 +87,7 @@ class GearmanAdminClientCommandHandler(GearmanCommandHandler):
         cmd_type = cmd.replace(" ", "_")
         recv_server_command_function_name = 'recv_server_%s' % cmd_type
 
-        cmd_callback = getattr(self, recv_server_command_function_name, None)
+        cmd_callback = getattr(self, recv_server_command_function_name)
         if not cmd_callback:
             gearman_logger.error('Could not handle command: %r - %r' % (cmd_type, raw_text))
             raise ValueError('Could not handle command: %r - %r' % (cmd_type, raw_text))
@@ -165,7 +165,7 @@ class GearmanAdminClientCommandHandler(GearmanCommandHandler):
         """Shutdown response is a simple passthrough"""
         self._recv_responses.append(None)
         return False
-    
+
     def recv_server_getpid(self, raw_text):
         """PID response is a simple passthrough"""
         self._recv_responses.append(raw_text)
@@ -189,11 +189,12 @@ class GearmanAdminClientCommandHandler(GearmanCommandHandler):
         # Label our fields and make the results Python friendly
         handle, queued_count, canceled_count, enabled_count = split_tokens
 
-        job_dict = {}
-        job_dict['handle'] = handle
-        job_dict['queued'] = int(queued_count)
-        job_dict['canceled'] = int(canceled_count)
-        job_dict['enabled'] = int(enabled_count)
+        job_dict = {
+            "handle": handle,
+            "queued": int(queued_count),
+            "canceled": int(canceled_count),
+            "enabled": int(enabled_count),
+        }
         self._status_response.append(job_dict)
         return True
 
@@ -220,7 +221,6 @@ class GearmanAdminClientCommandHandler(GearmanCommandHandler):
         # Label our fields and make the results Python friendly
         unique = split_tokens
 
-        job_dict = {}
-        job_dict['unique'] = unique
+        job_dict = {"unique": unique}
         self._status_response.append(job_dict)
         return True
