@@ -157,7 +157,7 @@ class ProtocolBinaryCommandsTest(unittest.TestCase):
 
         # Assert we get a non-string argument (expecting BYTES)
         cmd_type = protocol.GEARMAN_COMMAND_JOB_CREATED
-        cmd_args = dict(job_handle=unicode(12345))
+        cmd_args = {"job_handle": u"12345"}
         self.assertRaises(ProtocolError, protocol.pack_binary_command, cmd_type, cmd_args)
 
         # Assert we check for NULLs in all but the "last" argument, where last depends on the cmd_type.
@@ -205,7 +205,7 @@ class ProtocolBinaryCommandsTest(unittest.TestCase):
 
     def test_packing_multiple_args(self):
         cmd_type = protocol.GEARMAN_COMMAND_SUBMIT_JOB
-        cmd_args = dict(task='function', unique='12345', data=b'abcd')
+        cmd_args = dict(task=b'function', unique=b'12345', data=b'abcd')
 
         ordered_parameters = [cmd_args['task'], cmd_args['unique'], cmd_args['data']]
 
