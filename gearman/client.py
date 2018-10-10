@@ -48,17 +48,24 @@ class GearmanClient(GearmanConnectionManager):
         )
         return gearman.util.unlist(completed_job_list)
 
-    def submit_multiple_jobs(self, jobs_to_submit, background=False, wait_until_complete=True, max_retries=0, poll_timeout=None):
-        """Takes a list of jobs_to_submit with dicts of
+    def submit_multiple_jobs(self, jobs_to_submit, background=False, max_retries=0, **kwargs):
+        """
+        Takes a list of jobs as dicts with keys ["task", "data", "unique", "priority"],
+        creates a job for them, assign them connections, and request that they be done.
 
-        {'task': task, 'data': data, 'unique': unique, 'priority': priority}
         """
         assert type(jobs_to_submit) in (list, tuple, set), "Expected multiple jobs, received 1?"
 
         # Convert all job dicts to job request objects
-        requests_to_submit = [self._create_request_from_dictionary(job_info, background=background, max_retries=max_retries) for job_info in jobs_to_submit]
+        requests_to_submit = [
+            self._create_request_from_dictionary(
+                job_info,
+                background=background,
+                max_retries=max_retries
+            ) for job_info in jobs_to_submit
+        ]
 
-        return self.submit_multiple_requests(requests_to_submit, wait_until_complete=wait_until_complete, poll_timeout=poll_timeout)
+        return self.submit_multiple_requests(requests_to_submit, **kwargs)
 
     def submit_multiple_requests(self, job_requests, wait_until_complete=True, poll_timeout=None):
         """Take GearmanJobRequests, assign them connections, and request that they be done.
@@ -175,7 +182,11 @@ class GearmanClient(GearmanConnectionManager):
         return job_requests
 
     def _create_request_from_dictionary(self, job_info, background=False, max_retries=0):
-        """Takes a dictionary with fields  {'task': task, 'unique': unique, 'data': data, 'priority': priority, 'background': background}"""
+        """
+        Takes a dictionary with fields ["task", "unique", "data", "priority"] and
+        returns the corresponding ``GearmanJobRequest``.
+
+        """
         # Make sure we have a unique identifier for ALL our tasks
         job_unique = job_info.get('unique')
         if not job_unique:
