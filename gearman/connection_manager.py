@@ -11,11 +11,11 @@ gearman_logger = logging.getLogger(__name__)
 
 class DataEncoder(object):
     @classmethod
-    def encode(cls, encodable_object):
+    def encode(cls, encodable_object):  # pragma: no cover
         raise NotImplementedError
 
     @classmethod
-    def decode(cls, decodable_string):
+    def decode(cls, decodable_string):  # pragma: no cover
         raise NotImplementedError
 
 class NoopEncoder(DataEncoder):
