@@ -1,5 +1,8 @@
+# -*- encoding: utf-8
+
 import logging
 
+from . import compat
 import gearman.io
 import gearman.util
 from gearman.connection import GearmanConnection
@@ -22,7 +25,7 @@ class NoopEncoder(DataEncoder):
     """Provide common object dumps for all communications over gearman"""
     @classmethod
     def _enforce_byte_string(cls, given_object):
-        if type(given_object) != str:
+        if not isinstance(given_object, compat.binary_type):
             raise TypeError("Expecting byte string, got %r" % type(given_object))
 
     @classmethod
