@@ -2,17 +2,13 @@
 
 import collections
 import random
-import string
 import unittest
 
 from gearman import compat
-import gearman.util
-from gearman.command_handler import GearmanCommandHandler
 from gearman.connection import GearmanConnection
-from gearman.connection_manager import GearmanConnectionManager, NoopEncoder
+from gearman.connection_manager import GearmanConnectionManager
 
-from gearman.constants import PRIORITY_NONE, PRIORITY_HIGH, PRIORITY_LOW, DEFAULT_GEARMAN_PORT, JOB_UNKNOWN, JOB_CREATED
-from gearman.errors import ConnectionError
+from gearman.constants import PRIORITY_NONE, DEFAULT_GEARMAN_PORT, JOB_UNKNOWN
 from gearman.job import GearmanJob, GearmanJobRequest
 from gearman.protocol import get_command_name
 

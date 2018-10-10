@@ -16,7 +16,7 @@ from gearman.protocol import (
     GEARMAN_COMMAND_TEXT_COMMAND, \
     GEARMAN_SERVER_COMMAND_STATUS, GEARMAN_SERVER_COMMAND_VERSION, GEARMAN_SERVER_COMMAND_WORKERS, GEARMAN_SERVER_COMMAND_MAXQUEUE, GEARMAN_SERVER_COMMAND_SHUTDOWN)
 
-from tests._core_testing import _GearmanAbstractTest, MockGearmanConnectionManager, MockGearmanConnection
+from tests._core_testing import _GearmanAbstractTest, MockGearmanConnectionManager
 
 class MockGearmanAdminClient(GearmanAdminClient, MockGearmanConnectionManager):
     pass

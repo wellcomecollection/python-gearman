@@ -202,7 +202,7 @@ class ClientTest(_GearmanAbstractTest):
         job_request = self.connection_manager.submit_job(expected_job.task, expected_job.data, unique=expected_job.unique, priority=PRIORITY_HIGH, poll_timeout=0.01)
 
         assert job_request.priority == PRIORITY_HIGH
-        assert job_request.background == False
+        assert not job_request.background
         assert job_request.state == JOB_PENDING
 
         self.assertFalse(job_request.complete)
@@ -223,7 +223,7 @@ class ClientTest(_GearmanAbstractTest):
         )
 
         assert job_request.priority == PRIORITY_HIGH
-        assert job_request.background == False
+        assert not job_request.background
         assert job_request.state == JOB_PENDING
 
         assert not job_request.complete
@@ -453,7 +453,6 @@ class ClientCommandHandlerStateMachineTest(_GearmanAbstractTest):
         current_request = self.generate_job_request()
 
         job_handle = current_request.job.handle
-        new_data = random_bytes()
         self.command_handler.recv_command(GEARMAN_COMMAND_WORK_FAIL, job_handle=job_handle)
 
         assert current_request.state == JOB_FAILED

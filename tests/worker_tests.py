@@ -5,7 +5,7 @@ import collections
 from gearman.worker import GearmanWorker
 from gearman.worker_handler import GearmanWorkerCommandHandler
 
-from gearman.errors import ServerUnavailable, InvalidWorkerState
+from gearman.errors import ServerUnavailable
 from gearman.protocol import get_command_name, GEARMAN_COMMAND_RESET_ABILITIES, GEARMAN_COMMAND_CAN_DO, GEARMAN_COMMAND_SET_CLIENT_ID, \
     GEARMAN_COMMAND_NOOP, GEARMAN_COMMAND_PRE_SLEEP, GEARMAN_COMMAND_NO_JOB, GEARMAN_COMMAND_GRAB_JOB_UNIQ, GEARMAN_COMMAND_JOB_ASSIGN_UNIQ, \
     GEARMAN_COMMAND_WORK_STATUS, GEARMAN_COMMAND_WORK_FAIL, GEARMAN_COMMAND_WORK_COMPLETE, GEARMAN_COMMAND_WORK_DATA, GEARMAN_COMMAND_WORK_EXCEPTION, GEARMAN_COMMAND_WORK_WARNING

@@ -1,7 +1,7 @@
 # -*- encoding: utf-8
 
 import collections
-from gearman.constants import PRIORITY_NONE, JOB_UNKNOWN, JOB_PENDING, JOB_CREATED, JOB_FAILED, JOB_COMPLETE
+from gearman.constants import PRIORITY_NONE, JOB_UNKNOWN, JOB_CREATED, JOB_FAILED, JOB_COMPLETE
 
 
 class GearmanJob(object):

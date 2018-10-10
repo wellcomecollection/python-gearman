@@ -11,7 +11,7 @@ import gearman.util
 from . import compat
 from gearman.connection_manager import GearmanConnectionManager
 from gearman.client_handler import GearmanClientCommandHandler
-from gearman.constants import PRIORITY_NONE, PRIORITY_LOW, PRIORITY_HIGH, JOB_UNKNOWN, JOB_PENDING
+from gearman.constants import PRIORITY_NONE, JOB_UNKNOWN, JOB_PENDING
 from gearman.errors import ConnectionError, ExceededConnectionAttempts, ServerUnavailable
 from gearman.job import GearmanJobRequest
 

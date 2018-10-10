@@ -16,7 +16,7 @@ __all__ = [
     "GearmanClient",
     "GearmanWorker",
 
-    "DataEncoder"
+    "DataEncoder",
 
     "PRIORITY_NONE",
     "PRIORITY_LOW",
