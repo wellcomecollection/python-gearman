@@ -16,45 +16,31 @@ class TestProtocolBinaryCommands(object):
     #######################
     # Begin parsing tests #
     #######################
-    def test_parsing_errors(self):
-        malformed_command_buffer = b"%sAAAABBBBCCCC"
-
-        # Raise malformed magic exceptions
+    @pytest.mark.parametrize('data,is_response', [
+        (b"DDDDAAAABBBBCCCC", True),
+        (b"%sAAAABBBBCCCC" % protocol.MAGIC_RES_STRING, False),
+        (b"%sAAAABBBBCCCC" % protocol.MAGIC_REQ_STRING, True),
+    ])
+    def test_parsing_errors_raw(self, data, is_response):
+        in_buffer = array.array("b", data)
         with pytest.raises(ProtocolError):
-            protocol.parse_binary_command(
-                array.array("b", malformed_command_buffer % b"DDDD")
-            )
+            protocol.parse_binary_command(in_buffer, is_response=is_response)
 
-        with pytest.raises(ProtocolError):
-            protocol.parse_binary_command(
-                array.array("b", malformed_command_buffer % protocol.MAGIC_RES_STRING),
-                is_response=False
-            )
-
-        with pytest.raises(ProtocolError):
-            protocol.parse_binary_command(
-                array.array("b", malformed_command_buffer % protocol.MAGIC_REQ_STRING),
-                is_response=True
-            )
-
+    @pytest.mark.parametrize('struct_components', [
         # Raise unknown command errors
-        unassigned_gearman_command = 1234
-        unknown_command_buffer = struct.pack('!4sII', protocol.MAGIC_RES_STRING, unassigned_gearman_command, 0)
-        unknown_command_buffer = array.array("b", unknown_command_buffer)
-        with pytest.raises(ProtocolError):
-            protocol.parse_binary_command(unknown_command_buffer)
+        (("!4sII", protocol.MAGIC_RES_STRING, 1234, 0)),
 
         # Raise an error on our imaginary GEARMAN_COMMAND_TEXT_COMMAND
-        imaginary_command_buffer = struct.pack('!4sII4s', protocol.MAGIC_RES_STRING, protocol.GEARMAN_COMMAND_TEXT_COMMAND, 4, b'ABCD')
-        imaginary_command_buffer = array.array("b", imaginary_command_buffer)
-        with pytest.raises(ProtocolError):
-            protocol.parse_binary_command(imaginary_command_buffer)
+        (("!4sII4s", protocol.MAGIC_RES_STRING, protocol.GEARMAN_COMMAND_TEXT_COMMAND, 4, b'ABCD')),
 
         # Raise an error on receiving an unexpected payload
-        unexpected_payload_command_buffer = struct.pack('!4sII4s', protocol.MAGIC_RES_STRING, protocol.GEARMAN_COMMAND_NOOP, 4, b'ABCD')
-        unexpected_payload_command_buffer = array.array("b", unexpected_payload_command_buffer)
+        (("!4sII4s", protocol.MAGIC_RES_STRING, protocol.GEARMAN_COMMAND_NOOP, 4, b'ABCD')),
+    ])
+    def test_parsing_errors_struct(self, struct_components):
+        data = struct.pack(*struct_components)
+        in_buffer = array.array("b", data)
         with pytest.raises(ProtocolError):
-            protocol.parse_binary_command(unexpected_payload_command_buffer)
+            protocol.parse_binary_command(in_buffer)
 
     @given(binary())
     def test_parsing_either_succeeds_or_is_protocolerror(self, in_buffer):
