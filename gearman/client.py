@@ -35,7 +35,7 @@ class GearmanClient(GearmanConnectionManager):
         self.request_to_rotating_connection_queue = weakref.WeakKeyDictionary(
             collections.defaultdict(collections.deque))
 
-    def submit_job(self, task, data, unique=None, priority=PRIORITY_NONE, background=False, wait_until_complete=True, max_retries=0, poll_timeout=None):
+    def submit_job(self, task, data, unique=None, priority=PRIORITY_NONE, **kwargs):
         """Submit a single job to any gearman server"""
         job_info = {
             "task": task,
@@ -44,11 +44,7 @@ class GearmanClient(GearmanConnectionManager):
             "priority": priority,
         }
         completed_job_list = self.submit_multiple_jobs(
-            jobs_to_submit=[job_info],
-            background=background,
-            wait_until_complete=wait_until_complete,
-            max_retries=max_retries,
-            poll_timeout=poll_timeout
+            jobs_to_submit=[job_info], **kwargs
         )
         return gearman.util.unlist(completed_job_list)
 
