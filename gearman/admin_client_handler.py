@@ -221,7 +221,6 @@ class GearmanAdminClientCommandHandler(GearmanCommandHandler):
         # Label our fields and make the results Python friendly
         unique = split_tokens
 
-        job_dict = {}
-        job_dict['unique'] = unique
+        job_dict = {"unique": unique}
         self._status_response.append(job_dict)
         return True

@@ -12,6 +12,7 @@ from gearman.protocol import (
     GEARMAN_SERVER_COMMAND_CANCEL_JOB,
     GEARMAN_SERVER_COMMAND_GETPID,
     GEARMAN_SERVER_COMMAND_SHOW_JOBS,
+    GEARMAN_SERVER_COMMAND_SHOW_UNIQUE_JOBS,
     GEARMAN_COMMAND_TEXT_COMMAND, \
     GEARMAN_SERVER_COMMAND_STATUS, GEARMAN_SERVER_COMMAND_VERSION, GEARMAN_SERVER_COMMAND_WORKERS, GEARMAN_SERVER_COMMAND_MAXQUEUE, GEARMAN_SERVER_COMMAND_SHUTDOWN)
 
@@ -235,6 +236,32 @@ class CommandHandlerStateMachineTest(_StateMachineTest):
         assert server_response == (
             {"handle": "foo", "queued": 1, "canceled": 2, "enabled": 3},
             {"handle": "bar", "queued": 4, "canceled": 5, "enabled": 6},
+        )
+
+    def test_show_unique_jobs_empty(self):
+        self.send_server_command(GEARMAN_SERVER_COMMAND_SHOW_UNIQUE_JOBS)
+
+        self.recv_server_response('.')
+        server_response = self.pop_response(GEARMAN_SERVER_COMMAND_SHOW_UNIQUE_JOBS)
+        assert server_response == ()
+
+    def test_show_unique_jobs_incorrect_tokens(self):
+        self.send_server_command(GEARMAN_SERVER_COMMAND_SHOW_UNIQUE_JOBS)
+
+        with pytest.raises(ProtocolError, match="Received 3 tokens, expected 1 tokens"):
+            self.recv_server_response('1\t2\t3')
+
+    def test_show_unique_jobs(self):
+        self.send_server_command(GEARMAN_SERVER_COMMAND_SHOW_UNIQUE_JOBS)
+
+        self.recv_server_response('foo')
+        self.recv_server_response('bar')
+
+        self.recv_server_response(".")
+        server_response = self.pop_response(GEARMAN_SERVER_COMMAND_SHOW_UNIQUE_JOBS)
+        assert server_response == (
+            {"unique": ["foo"]},
+            {"unique": ["bar"]},
         )
 
     def test_recv_server_response_without_command(self):
