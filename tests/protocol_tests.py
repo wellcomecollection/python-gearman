@@ -67,16 +67,16 @@ class ProtocolBinaryCommandsTest(unittest.TestCase):
         not_enough_data_command_buffer = struct.pack('!4s', protocol.MAGIC_RES_STRING)
         not_enough_data_command_buffer = array.array("c", not_enough_data_command_buffer)
         cmd_type, cmd_args, cmd_len = protocol.parse_binary_command(not_enough_data_command_buffer)
-        self.assertEquals(cmd_type, None)
-        self.assertEquals(cmd_args, None)
+        assert cmd_type is None
+        assert cmd_args is None
         self.assertEquals(cmd_len, 0)
 
         # Test that we return with nothing to do... received a partial packet (expected binary payload of size 4, got 0)
         not_enough_data_command_buffer = struct.pack('!4sII', protocol.MAGIC_RES_STRING, protocol.GEARMAN_COMMAND_ECHO_RES, 4)
         not_enough_data_command_buffer = array.array("c", not_enough_data_command_buffer)
         cmd_type, cmd_args, cmd_len = protocol.parse_binary_command(not_enough_data_command_buffer)
-        self.assertEquals(cmd_type, None)
-        self.assertEquals(cmd_args, None)
+        assert cmd_type is None
+        assert cmd_args is None
         self.assertEquals(cmd_len, 0)
 
     def test_parsing_no_args(self):
@@ -182,7 +182,7 @@ class ProtocolBinaryCommandsTest(unittest.TestCase):
 
         expected_command_buffer = struct.pack('!4sII', protocol.MAGIC_RES_STRING, cmd_type, 0)
         packed_command_buffer = protocol.pack_binary_command(cmd_type, cmd_args, is_response=True)
-        self.assertEquals(packed_command_buffer, expected_command_buffer)
+        assert packed_command_buffer == expected_command_buffer
 
     def test_packing_no_arg(self):
         cmd_type = protocol.GEARMAN_COMMAND_NOOP
@@ -190,7 +190,7 @@ class ProtocolBinaryCommandsTest(unittest.TestCase):
 
         expected_command_buffer = struct.pack('!4sII', protocol.MAGIC_REQ_STRING, cmd_type, 0)
         packed_command_buffer = protocol.pack_binary_command(cmd_type, cmd_args)
-        self.assertEquals(packed_command_buffer, expected_command_buffer)
+        assert packed_command_buffer == expected_command_buffer
 
     def test_packing_single_arg(self):
         cmd_type = protocol.GEARMAN_COMMAND_ECHO_REQ
@@ -201,7 +201,7 @@ class ProtocolBinaryCommandsTest(unittest.TestCase):
 
         expected_command_buffer = struct.pack(expected_format, protocol.MAGIC_REQ_STRING, cmd_type, expected_payload_size, cmd_args['data'])
         packed_command_buffer = protocol.pack_binary_command(cmd_type, cmd_args)
-        self.assertEquals(packed_command_buffer, expected_command_buffer)
+        assert packed_command_buffer == expected_command_buffer
 
     def test_packing_multiple_args(self):
         cmd_type = protocol.GEARMAN_COMMAND_SUBMIT_JOB
@@ -215,7 +215,7 @@ class ProtocolBinaryCommandsTest(unittest.TestCase):
         expected_command_buffer = struct.pack(expected_format, protocol.MAGIC_REQ_STRING, cmd_type, expected_payload_size, expected_payload)
 
         packed_command_buffer = protocol.pack_binary_command(cmd_type, cmd_args)
-        self.assertEquals(packed_command_buffer, expected_command_buffer)
+        assert packed_command_buffer == expected_command_buffer
 
 class ProtocolTextCommandsTest(unittest.TestCase):
 	#######################
@@ -228,8 +228,8 @@ class ProtocolTextCommandsTest(unittest.TestCase):
     def test_parsing_without_enough_data(self):
         received_data = array.array("c", "Hello there")
         cmd_type, cmd_response, cmd_len = protocol.parse_text_command(received_data)
-        self.assertEquals(cmd_type, None)
-        self.assertEquals(cmd_response, None)
+        assert cmd_type is None
+        assert cmd_response is None
         self.assertEquals(cmd_len, 0)
 
     def test_parsing_single_line(self):
@@ -274,7 +274,7 @@ class ProtocolTextCommandsTest(unittest.TestCase):
         cmd_args = dict(raw_text=expected_string)
 
         packed_command = protocol.pack_text_command(cmd_type, cmd_args)
-        self.assertEquals(packed_command, expected_string)
+        assert packed_command == expected_string
 
 class GearmanConnectionTest(unittest.TestCase):
     """Tests the base CommandHandler class that underpins all other CommandHandlerTests"""
