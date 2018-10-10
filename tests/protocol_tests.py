@@ -228,7 +228,7 @@ class TestProtocolTextCommands(object):
     # Begin parsing tests #
     #######################
     def test_parsing_errors(self):
-        received_data = array.array("c", b"Hello\x00there\n")
+        received_data = array.array("b", b"Hello\x00there\n")
         with pytest.raises(ProtocolError):
             protocol.parse_text_command(received_data)
 
@@ -240,7 +240,7 @@ class TestProtocolTextCommands(object):
         assert cmd_len == 0
 
     def test_parsing_single_line(self):
-        received_data = array.array("c", "Hello there\n")
+        received_data = array.array("b", b"Hello there\n")
         cmd_type, cmd_response, cmd_len = protocol.parse_text_command(received_data)
         assert cmd_type == protocol.GEARMAN_COMMAND_TEXT_COMMAND
         assert cmd_response == {
@@ -249,8 +249,8 @@ class TestProtocolTextCommands(object):
         assert cmd_len == len(received_data)
 
     def test_parsing_multi_line(self):
-        sentence_one = array.array("c", "Hello there\n")
-        sentence_two = array.array("c", "My name is bob\n")
+        sentence_one = array.array("b", b"Hello there\n")
+        sentence_two = array.array("b", b"My name is bob\n")
         received_data = sentence_one + sentence_two
 
         cmd_type, cmd_response, cmd_len = protocol.parse_text_command(received_data)

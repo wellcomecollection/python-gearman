@@ -275,10 +275,10 @@ def parse_text_command(in_buffer):
     cmd_type = None
     cmd_args = None
     cmd_len = 0
-    if '\n' not in in_buffer:
+    if ord(b"\n") not in in_buffer:
         return cmd_type, cmd_args, cmd_len
 
-    text_command, in_buffer = compat.array_to_bytes(in_buffer).split('\n', 1)
+    text_command, in_buffer = compat.array_to_bytes(in_buffer).split(b'\n', 1)
     if NULL_CHAR in text_command:
         raise ProtocolError('Received unexpected character: %s' % text_command)
 
