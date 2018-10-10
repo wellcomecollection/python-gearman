@@ -165,7 +165,7 @@ class GearmanAdminClientCommandHandler(GearmanCommandHandler):
         """Shutdown response is a simple passthrough"""
         self._recv_responses.append(None)
         return False
-    
+
     def recv_server_getpid(self, raw_text):
         """PID response is a simple passthrough"""
         self._recv_responses.append(raw_text)
