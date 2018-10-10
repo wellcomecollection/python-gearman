@@ -118,11 +118,22 @@ class TestProtocolBinaryCommands(object):
         binary_payload = protocol.NULL_CHAR.join([b'test', b'function', b'identifier', expected_data])
         payload_size = len(binary_payload)
 
-        uniq_command_buffer = struct.pack('!4sII%ds' % payload_size, protocol.MAGIC_RES_STRING, protocol.GEARMAN_COMMAND_JOB_ASSIGN_UNIQ, payload_size, binary_payload)
-        uniq_command_buffer = array.array("c", uniq_command_buffer)
+        uniq_command_buffer = struct.pack(
+            '!4sII%ds' % payload_size,
+            protocol.MAGIC_RES_STRING,
+            protocol.GEARMAN_COMMAND_JOB_ASSIGN_UNIQ,
+            payload_size,
+            binary_payload
+        )
+        uniq_command_buffer = array.array("b", uniq_command_buffer)
         cmd_type, cmd_args, cmd_len = protocol.parse_binary_command(uniq_command_buffer)
         assert cmd_type == protocol.GEARMAN_COMMAND_JOB_ASSIGN_UNIQ
-        assert cmd_args == dict(job_handle='test', task='function', unique='identifier', data=expected_data)
+        assert cmd_args == {
+            u"job_handle": b"test",
+            u"task": b"function",
+            u"unique": b"identifier",
+            u"data": expected_data
+        }
         assert cmd_len == len(uniq_command_buffer)
 
     #######################
@@ -188,12 +199,18 @@ class TestProtocolBinaryCommands(object):
 
     def test_packing_single_arg(self):
         cmd_type = protocol.GEARMAN_COMMAND_ECHO_REQ
-        cmd_args = dict(data='abcde')
+        cmd_args = {u"data": b"abcde"}
 
         expected_payload_size = len(cmd_args['data'])
         expected_format = '!4sII%ds' % expected_payload_size
 
-        expected_command_buffer = struct.pack(expected_format, protocol.MAGIC_REQ_STRING, cmd_type, expected_payload_size, cmd_args['data'])
+        expected_command_buffer = struct.pack(
+            expected_format,
+            protocol.MAGIC_REQ_STRING,
+            cmd_type,
+            expected_payload_size,
+            cmd_args['data']
+        )
         packed_command_buffer = protocol.pack_binary_command(cmd_type, cmd_args)
         assert packed_command_buffer == expected_command_buffer
 
