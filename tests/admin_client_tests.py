@@ -10,6 +10,7 @@ from gearman.protocol import (
     GEARMAN_COMMAND_ECHO_RES,
     GEARMAN_COMMAND_ECHO_REQ,
     GEARMAN_SERVER_COMMAND_GETPID,
+    GEARMAN_SERVER_COMMAND_SHOW_JOBS,
     GEARMAN_COMMAND_TEXT_COMMAND, \
     GEARMAN_SERVER_COMMAND_STATUS, GEARMAN_SERVER_COMMAND_VERSION, GEARMAN_SERVER_COMMAND_WORKERS, GEARMAN_SERVER_COMMAND_MAXQUEUE, GEARMAN_SERVER_COMMAND_SHUTDOWN)
 
@@ -168,6 +169,23 @@ class CommandHandlerStateMachineTest(_GearmanAbstractTest):
         self.recv_server_response(None)
         server_response = self.pop_response(GEARMAN_SERVER_COMMAND_GETPID)
         assert server_response is None
+
+    def test_show_jobs_empty(self):
+        self.send_server_command(GEARMAN_SERVER_COMMAND_SHOW_JOBS)
+
+        # Pop prematurely
+        with pytest.raises(InvalidAdminClientState):
+            self.pop_response(GEARMAN_SERVER_COMMAND_SHOW_JOBS)
+
+        self.recv_server_response('.')
+        server_response = self.pop_response(GEARMAN_SERVER_COMMAND_SHOW_JOBS)
+        assert server_response == ()
+
+    def test_show_jobs_incorrect_tokens(self):
+        self.send_server_command(GEARMAN_SERVER_COMMAND_SHOW_JOBS)
+
+        with pytest.raises(ProtocolError, match="Received 3 tokens, expected 4 tokens"):
+            self.recv_server_response('1\t2\t3')
 
     def send_server_command(self, expected_command):
         self.command_handler.send_text_command(expected_command)
