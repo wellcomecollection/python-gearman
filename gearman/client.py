@@ -1,5 +1,6 @@
+# -*- encoding: utf-8
+
 import collections
-from gearman import compat
 import logging
 import os
 import random
@@ -30,7 +31,8 @@ class GearmanClient(GearmanConnectionManager):
 
         # The authoritative copy of all requests that this client knows about
         # Ignores the fact if a request has been bound to a connection or not
-        self.request_to_rotating_connection_queue = weakref.WeakKeyDictionary(compat.defaultdict(collections.deque))
+        self.request_to_rotating_connection_queue = weakref.WeakKeyDictionary(
+            collections.defaultdict(collections.deque))
 
     def submit_job(self, task, data, unique=None, priority=PRIORITY_NONE, background=False, wait_until_complete=True, max_retries=0, poll_timeout=None):
         """Submit a single job to any gearman server"""
