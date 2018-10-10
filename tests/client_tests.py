@@ -203,6 +203,27 @@ class ClientTest(_GearmanAbstractTest):
         self.assertFalse(job_request.complete)
         self.assertTrue(job_request.timed_out)
 
+    def test_single_fg_job_submission_timeout_unspecified_unique(self):
+        expected_job = self.generate_job()
+        def job_failed_submission(rx_conns, wr_conns, ex_conns):
+            return rx_conns, wr_conns, ex_conns
+
+        self.connection_manager.handle_connection_activity = job_failed_submission
+        job_request = self.connection_manager.submit_job(
+            expected_job.task,
+            expected_job.data,
+            unique=None,
+            priority=PRIORITY_HIGH,
+            poll_timeout=0.01
+        )
+
+        assert job_request.priority == PRIORITY_HIGH
+        assert job_request.background == False
+        assert job_request.state == JOB_PENDING
+
+        assert not job_request.complete
+        assert job_request.timed_out
+
     def test_wait_for_multiple_jobs_to_complete_or_timeout(self):
         completed_request = self.generate_job_request()
         failed_request = self.generate_job_request()
