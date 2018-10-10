@@ -16,6 +16,11 @@ matrix:
     - python: "3.5"
     - python: "3.6"
 
+  allow_failures:
+    - python: "3.4"
+    - python: "3.5"
+    - python: "3.6"
+
 install:
   - "pip install --upgrade pip setuptools"
   - "pip install coverage hypothesis pytest-cov pytest"
