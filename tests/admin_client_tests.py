@@ -1,5 +1,7 @@
 # -*- encoding: utf-8
 
+import pytest
+
 from gearman.admin_client import GearmanAdminClient, ECHO_STRING
 from gearman.admin_client_handler import GearmanAdminClientCommandHandler
 
@@ -23,7 +25,8 @@ class CommandHandlerStateMachineTest(_GearmanAbstractTest):
         self.connection_manager.current_handler = self.command_handler
 
     def test_send_illegal_server_commands(self):
-        self.assertRaises(ProtocolError, self.send_server_command, "This is not a server command")
+        with pytest.raises(ProtocolError):
+            self.send_server_command("This is not a server command")
 
     def test_ping_server(self):
         self.command_handler.send_echo_request(ECHO_STRING)
@@ -38,10 +41,12 @@ class CommandHandlerStateMachineTest(_GearmanAbstractTest):
         self.send_server_command(GEARMAN_SERVER_COMMAND_STATUS)
 
         # Test premature popping as this we aren't until ready we see the '.'
-        self.assertRaises(InvalidAdminClientState, self.pop_response, GEARMAN_SERVER_COMMAND_STATUS)
+        with pytest.raises(InvalidAdminClientState):
+            self.pop_response(GEARMAN_SERVER_COMMAND_STATUS)
 
         # Test malformed server status
-        self.assertRaises(ProtocolError, self.recv_server_response, '\t'.join(['12', 'IP-A', 'CLIENT-A']))
+        with pytest.raises(ProtocolError):
+            self.recv_server_response('\t'.join(['12', 'IP-A', 'CLIENT-A']))
 
         self.recv_server_response('.')
 
@@ -90,11 +95,15 @@ class CommandHandlerStateMachineTest(_GearmanAbstractTest):
         self.send_server_command(GEARMAN_SERVER_COMMAND_WORKERS)
 
         # Test premature popping as this we aren't until ready we see the '.'
-        self.assertRaises(InvalidAdminClientState, self.pop_response, GEARMAN_SERVER_COMMAND_WORKERS)
+        with pytest.raises(InvalidAdminClientState):
+            self.pop_response(GEARMAN_SERVER_COMMAND_WORKERS)
 
         # Test malformed responses
-        self.assertRaises(ProtocolError, self.recv_server_response, ' '.join(['12', 'IP-A', 'CLIENT-A']))
-        self.assertRaises(ProtocolError, self.recv_server_response, ' '.join(['12', 'IP-A', 'CLIENT-A', 'NOT:']))
+        with pytest.raises(ProtocolError):
+            self.recv_server_response(' '.join(['12', 'IP-A', 'CLIENT-A']))
+
+        with pytest.raises(ProtocolError):
+            self.recv_server_response(' '.join(['12', 'IP-A', 'CLIENT-A', 'NOT:']))
 
         self.recv_server_response('.')
 
@@ -123,10 +132,12 @@ class CommandHandlerStateMachineTest(_GearmanAbstractTest):
 
     def test_maxqueue(self):
         self.send_server_command(GEARMAN_SERVER_COMMAND_MAXQUEUE)
-        self.assertRaises(ProtocolError, self.recv_server_response, 'NOT OK')
+        with pytest.raises(ProtocolError):
+            self.recv_server_response('NOT OK')
 
         # Pop prematurely
-        self.assertRaises(InvalidAdminClientState, self.pop_response, GEARMAN_SERVER_COMMAND_MAXQUEUE)
+        with pytest.raises(InvalidAdminClientState):
+            self.pop_response(GEARMAN_SERVER_COMMAND_MAXQUEUE)
 
         self.recv_server_response('OK')
         server_response = self.pop_response(GEARMAN_SERVER_COMMAND_MAXQUEUE)
@@ -136,7 +147,8 @@ class CommandHandlerStateMachineTest(_GearmanAbstractTest):
         self.send_server_command(GEARMAN_SERVER_COMMAND_SHUTDOWN)
 
         # Pop prematurely
-        self.assertRaises(InvalidAdminClientState, self.pop_response, GEARMAN_SERVER_COMMAND_SHUTDOWN)
+        with pytest.raises(InvalidAdminClientState):
+            self.pop_response(GEARMAN_SERVER_COMMAND_SHUTDOWN)
 
         self.recv_server_response(None)
         server_response = self.pop_response(GEARMAN_SERVER_COMMAND_SHUTDOWN)
