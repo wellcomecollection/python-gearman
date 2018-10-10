@@ -28,7 +28,7 @@ class CommandHandlerStateMachineTest(_GearmanAbstractTest):
     def test_ping_server(self):
         self.command_handler.send_echo_request(ECHO_STRING)
         self.assert_sent_command(GEARMAN_COMMAND_ECHO_REQ, data=ECHO_STRING)
-        self.assertEqual(self.command_handler._sent_commands[0], GEARMAN_COMMAND_ECHO_REQ)
+        assert self.command_handler._sent_commands[0] == GEARMAN_COMMAND_ECHO_REQ
 
         self.command_handler.recv_command(GEARMAN_COMMAND_ECHO_RES, data=ECHO_STRING)
         server_response = self.pop_response(GEARMAN_COMMAND_ECHO_REQ)
@@ -46,7 +46,7 @@ class CommandHandlerStateMachineTest(_GearmanAbstractTest):
         self.recv_server_response('.')
 
         server_response = self.pop_response(GEARMAN_SERVER_COMMAND_STATUS)
-        self.assertEquals(server_response, tuple())
+        assert server_response == ()
 
     def test_multiple_status(self):
         self.send_server_command(GEARMAN_SERVER_COMMAND_STATUS)
@@ -55,18 +55,18 @@ class CommandHandlerStateMachineTest(_GearmanAbstractTest):
         self.recv_server_response('.')
 
         server_response = self.pop_response(GEARMAN_SERVER_COMMAND_STATUS)
-        self.assertEquals(len(server_response), 2)
+        assert len(server_response) == 2
 
         test_response, another_response = server_response
-        self.assertEquals(test_response['task'], 'test_function')
-        self.assertEquals(test_response['queued'], 1)
-        self.assertEquals(test_response['running'], 5)
-        self.assertEquals(test_response['workers'],  17)
+        assert test_response['task'] == 'test_function'
+        assert test_response['queued'] == 1
+        assert test_response['running'] == 5
+        assert test_response['workers'] == 17
 
-        self.assertEquals(another_response['task'], 'another_function')
-        self.assertEquals(another_response['queued'], 2)
-        self.assertEquals(another_response['running'], 4)
-        self.assertEquals(another_response['workers'],  23)
+        assert another_response['task'] == 'another_function'
+        assert another_response['queued'] == 2
+        assert another_response['running'] == 4
+        assert another_response['workers'] == 23
 
     def test_version(self):
         expected_version = '0.12345'
@@ -138,7 +138,7 @@ class CommandHandlerStateMachineTest(_GearmanAbstractTest):
         expected_line = "%s\n" % expected_command
         self.assert_sent_command(GEARMAN_COMMAND_TEXT_COMMAND, raw_text=expected_line)
 
-        self.assertEqual(self.command_handler._sent_commands[0], expected_command)
+        assert self.command_handler._sent_commands[0] == expected_command
 
     def recv_server_response(self, response_line):
         self.command_handler.recv_command(GEARMAN_COMMAND_TEXT_COMMAND, raw_text=response_line)
