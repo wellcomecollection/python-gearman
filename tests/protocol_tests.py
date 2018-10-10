@@ -13,41 +13,7 @@ from gearman.errors import ConnectionError, ServerUnavailable, ProtocolError
 from tests._core_testing import _GearmanAbstractTest
 
 
-@pytest.mark.parametrize('cmd_type,cmd_args', [
-    # Assert we get an unknown command
-    (1234, {}),
-
-    # Assert we get a fake command
-    (protocol.GEARMAN_COMMAND_TEXT_COMMAND, {}),
-
-    # Assert we get arg mismatch, got 1, expecting 0
-    (protocol.GEARMAN_COMMAND_GRAB_JOB, {u"extra": u"arguments"}),
-
-    # Assert we get arg mismatch, got 0, expecting 1
-    (protocol.GEARMAN_COMMAND_JOB_CREATED, {}),
-
-    # Assert we get arg mismatch (name), got 1, expecting 1
-    (protocol.GEARMAN_COMMAND_JOB_CREATED, {u"extra": "arguments"}),
-
-    # Assert we get a non-string argument
-    (protocol.GEARMAN_COMMAND_JOB_CREATED, {u"job_handle": 12345}),
-
-    # Assert we get a non-string argument (expecting BYTES)
-    (protocol.GEARMAN_COMMAND_JOB_CREATED, {u"job_handle": u"12345"}),
-
-    # Assert we check for NULLs in all but the "last" argument,
-    # where last depends on the cmd_type.
-    (protocol.GEARMAN_COMMAND_SUBMIT_JOB,
-     {u"task": b"funct\x00ion", u"data": b"abcd", u"unique": b"12345"}),
-    (protocol.GEARMAN_COMMAND_SUBMIT_JOB,
-     {u"task": b"function", u"data": b"abcd", u"unique": b"123\x00\x0045"}),
-])
-def test_packing_errors(cmd_type, cmd_args):
-    with pytest.raises(ProtocolError):
-        protocol.pack_binary_command(cmd_type=cmd_type, cmd_args=cmd_args)
-
-
-class ProtocolBinaryCommandsTest(unittest.TestCase):
+class TestProtocolBinaryCommands(object):
     #######################
     # Begin parsing tests #
     #######################
@@ -131,7 +97,7 @@ class ProtocolBinaryCommandsTest(unittest.TestCase):
         echo_command_buffer = array.array("c", echo_command_buffer)
         cmd_type, cmd_args, cmd_len = protocol.parse_binary_command(echo_command_buffer)
         assert cmd_type == protocol.GEARMAN_COMMAND_ECHO_RES
-        self.assertEquals(cmd_args, dict(data=echoed_string))
+        assert cmd_args == {u"data": echoed_string}
         assert cmd_len == len(echo_command_buffer)
 
     def test_parsing_single_arg_with_extra_data(self):
@@ -162,7 +128,40 @@ class ProtocolBinaryCommandsTest(unittest.TestCase):
     #######################
     # Begin packing tests #
     #######################
-    def test_packing_errors(self):
+    @pytest.mark.parametrize('cmd_type,cmd_args', [
+        # Assert we get an unknown command
+        (1234, {}),
+
+        # Assert we get a fake command
+        (protocol.GEARMAN_COMMAND_TEXT_COMMAND, {}),
+
+        # Assert we get arg mismatch, got 1, expecting 0
+        (protocol.GEARMAN_COMMAND_GRAB_JOB, {u"extra": u"arguments"}),
+
+        # Assert we get arg mismatch, got 0, expecting 1
+        (protocol.GEARMAN_COMMAND_JOB_CREATED, {}),
+
+        # Assert we get arg mismatch (name), got 1, expecting 1
+        (protocol.GEARMAN_COMMAND_JOB_CREATED, {u"extra": "arguments"}),
+
+        # Assert we get a non-string argument
+        (protocol.GEARMAN_COMMAND_JOB_CREATED, {u"job_handle": 12345}),
+
+        # Assert we get a non-string argument (expecting BYTES)
+        (protocol.GEARMAN_COMMAND_JOB_CREATED, {u"job_handle": u"12345"}),
+
+        # Assert we check for NULLs in all but the "last" argument,
+        # where last depends on the cmd_type.
+        (protocol.GEARMAN_COMMAND_SUBMIT_JOB,
+         {u"task": b"funct\x00ion", u"data": b"abcd", u"unique": b"12345"}),
+        (protocol.GEARMAN_COMMAND_SUBMIT_JOB,
+         {u"task": b"function", u"data": b"abcd", u"unique": b"123\x00\x0045"}),
+    ])
+    def test_packing_errors(self, cmd_type, cmd_args):
+        with pytest.raises(ProtocolError):
+            protocol.pack_binary_command(cmd_type=cmd_type, cmd_args=cmd_args)
+
+    def test_packing_errors_last_arg(self):
         # Assert we check for NULLs in all but the "last" argument,
         # where last depends on the cmd_type.
         protocol.pack_binary_command(
