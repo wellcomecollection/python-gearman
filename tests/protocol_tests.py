@@ -289,7 +289,8 @@ class GearmanCommandHandlerTest(_GearmanAbstractTest):
         self.assert_recv_command(protocol.GEARMAN_COMMAND_NOOP)
 
         # The mock handler never implemented 'recv_all_yours' so we should get an attribute error here
-        self.assertRaises(ValueError, self.command_handler.recv_command, protocol.GEARMAN_COMMAND_ALL_YOURS)
+        with pytest.raises(ValueError):
+            self.command_handler.recv_command(protocol.GEARMAN_COMMAND_ALL_YOURS)
 
     def _test_send_command(self):
         self.command_handler.send_command(protocol.GEARMAN_COMMAND_NOOP)

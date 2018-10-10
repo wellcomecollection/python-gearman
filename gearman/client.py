@@ -8,9 +8,10 @@ import weakref
 
 import gearman.util
 
+from . import compat
 from gearman.connection_manager import GearmanConnectionManager
 from gearman.client_handler import GearmanClientCommandHandler
-from gearman.constants import PRIORITY_NONE, PRIORITY_LOW, PRIORITY_HIGH, JOB_UNKNOWN, JOB_PENDING
+from gearman.constants import PRIORITY_NONE, JOB_UNKNOWN, JOB_PENDING
 from gearman.errors import ConnectionError, ExceededConnectionAttempts, ServerUnavailable
 from gearman.job import GearmanJobRequest
 
@@ -18,6 +19,7 @@ gearman_logger = logging.getLogger(__name__)
 
 # This number must be <= GEARMAN_UNIQUE_SIZE in gearman/libgearman/constants.h
 RANDOM_UNIQUE_BYTES = 16
+
 
 class GearmanClient(GearmanConnectionManager):
     """
@@ -161,6 +163,7 @@ class GearmanClient(GearmanConnectionManager):
     def wait_until_job_statuses_received(self, job_requests, poll_timeout=None):
         """Go into a select loop until we received statuses on all our requests"""
         assert type(job_requests) in (list, tuple, set), "Expected multiple job requests, received 1?"
+
         def is_status_not_updated(current_request):
             current_status = current_request.status
             return bool(current_status.get('time_received') == current_status.get('last_time_received'))
@@ -190,7 +193,7 @@ class GearmanClient(GearmanConnectionManager):
         # Make sure we have a unique identifier for ALL our tasks
         job_unique = job_info.get('unique')
         if not job_unique:
-            job_unique = os.urandom(self.random_unique_bytes).encode('hex')
+            job_unique = compat.to_hex(os.urandom(self.random_unique_bytes))
 
         current_job = self.job_class(connection=None, handle=None, task=job_info['task'], unique=job_unique, data=job_info['data'])
 

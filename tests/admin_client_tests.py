@@ -13,10 +13,11 @@ from gearman.protocol import (
     GEARMAN_SERVER_COMMAND_GETPID,
     GEARMAN_SERVER_COMMAND_SHOW_JOBS,
     GEARMAN_SERVER_COMMAND_SHOW_UNIQUE_JOBS,
-    GEARMAN_COMMAND_TEXT_COMMAND, \
+    GEARMAN_COMMAND_TEXT_COMMAND,
     GEARMAN_SERVER_COMMAND_STATUS, GEARMAN_SERVER_COMMAND_VERSION, GEARMAN_SERVER_COMMAND_WORKERS, GEARMAN_SERVER_COMMAND_MAXQUEUE, GEARMAN_SERVER_COMMAND_SHUTDOWN)
 
-from tests._core_testing import _GearmanAbstractTest, MockGearmanConnectionManager, MockGearmanConnection
+from tests._core_testing import _GearmanAbstractTest, MockGearmanConnectionManager
+
 
 class MockGearmanAdminClient(GearmanAdminClient, MockGearmanConnectionManager):
     pass
@@ -267,6 +268,29 @@ class CommandHandlerStateMachineTest(_StateMachineTest):
     def test_recv_server_response_without_command(self):
         with pytest.raises(InvalidAdminClientState, match='Received an unexpected server response'):
             self.recv_server_response(b'123')
+
+
+class TestGearmanAdminClientCommandHandler:
+
+    command_handler = GearmanAdminClientCommandHandler(
+        connection_manager=MockGearmanAdminClient()
+    )
+
+    @pytest.mark.parametrize('non_bytes', [1, None, object, u"123"])
+    def test_decode_data(self, non_bytes):
+        with pytest.raises(TypeError, match="Expecting byte string"):
+            self.command_handler.decode_data(non_bytes)
+
+    @pytest.mark.parametrize('non_bytes', [1, None, object, u"123"])
+    def test_encode_data(self, non_bytes):
+        with pytest.raises(TypeError, match="Expecting byte string"):
+            self.command_handler.encode_data(non_bytes)
+
+    def test_decodes_data_correctly(self):
+        assert self.command_handler.decode_data(b"123") == b"123"
+
+    def test_encodes_data_correctly(self):
+        assert self.command_handler.encode_data(b"123") == b"123"
 
 
 class BrokenCommandHandler(GearmanAdminClientCommandHandler):

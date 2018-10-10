@@ -1,13 +1,16 @@
+# -*- encoding: utf-8
+
 import logging
 
+from . import compat
 import gearman.io
 import gearman.util
 from gearman.connection import GearmanConnection
-from gearman.constants import _DEBUG_MODE_
 from gearman.errors import ConnectionError, GearmanError, ServerUnavailable
-from gearman.job import GearmanJob, GearmanJobRequest
+from gearman.job import GearmanJob
 
 gearman_logger = logging.getLogger(__name__)
+
 
 class DataEncoder(object):
     @classmethod
@@ -18,11 +21,12 @@ class DataEncoder(object):
     def decode(cls, decodable_string):  # pragma: no cover
         raise NotImplementedError
 
+
 class NoopEncoder(DataEncoder):
     """Provide common object dumps for all communications over gearman"""
     @classmethod
     def _enforce_byte_string(cls, given_object):
-        if type(given_object) != str:
+        if not isinstance(given_object, compat.binary_type):
             raise TypeError("Expecting byte string, got %r" % type(given_object))
 
     @classmethod
@@ -34,6 +38,7 @@ class NoopEncoder(DataEncoder):
     def decode(cls, decodable_string):
         cls._enforce_byte_string(decodable_string)
         return decodable_string
+
 
 class GearmanConnectionManager(object):
     """Abstract base class for any Gearman-type client that needs to connect/listen to multiple connections
@@ -62,7 +67,7 @@ class GearmanConnectionManager(object):
             if isinstance(element, str):
                 self.add_connection(element)
             elif isinstance(element, dict):
-                if not all (k in element for k in ('host', 'port', 'keyfile', 'certfile', 'ca_certs')):
+                if not all(k in element for k in ('host', 'port', 'keyfile', 'certfile', 'ca_certs')):
                     raise GearmanError("Incomplete SSL connection definition")
                 self.add_ssl_connection(element['host'], element['port'],
                                         element['keyfile'], element['certfile'],
@@ -72,6 +77,10 @@ class GearmanConnectionManager(object):
         self.connection_to_handler_map = {}
 
         self.handler_initial_state = {}
+
+    def __repr__(self):
+        return '<%s connection_list=%r>' % (
+            type(self).__name__, self.connection_list)
 
     def shutdown(self):
         # Shutdown all our connections one by one

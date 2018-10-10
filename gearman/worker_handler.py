@@ -1,11 +1,10 @@
-import logging
+# -*- encoding: utf-8
 
 from gearman.command_handler import GearmanCommandHandler
 from gearman.errors import InvalidWorkerState
 from gearman.protocol import GEARMAN_COMMAND_PRE_SLEEP, GEARMAN_COMMAND_RESET_ABILITIES, GEARMAN_COMMAND_CAN_DO, GEARMAN_COMMAND_SET_CLIENT_ID, GEARMAN_COMMAND_GRAB_JOB_UNIQ, \
     GEARMAN_COMMAND_WORK_STATUS, GEARMAN_COMMAND_WORK_COMPLETE, GEARMAN_COMMAND_WORK_FAIL, GEARMAN_COMMAND_WORK_EXCEPTION, GEARMAN_COMMAND_WORK_WARNING, GEARMAN_COMMAND_WORK_DATA
 
-gearman_logger = logging.getLogger(__name__)
 
 class GearmanWorkerCommandHandler(GearmanCommandHandler):
     """GearmanWorker state machine on a per connection basis
@@ -32,7 +31,6 @@ class GearmanWorkerCommandHandler(GearmanCommandHandler):
     ##### Public interface methods to be called by GearmanWorker #####
     ##################################################################
     def set_abilities(self, connection_abilities_list):
-        assert type(connection_abilities_list) in (list, tuple)
         self._handler_abilities = connection_abilities_list
 
         self.send_command(GEARMAN_COMMAND_RESET_ABILITIES)
@@ -54,11 +52,11 @@ class GearmanWorkerCommandHandler(GearmanCommandHandler):
         self.send_command(GEARMAN_COMMAND_WORK_STATUS, job_handle=current_job.handle, numerator=str(numerator), denominator=str(denominator))
 
     def send_job_complete(self, current_job, data):
-        """Removes a job from the queue if its backgrounded"""
+        """Removes a job from the queue if it's backgrounded"""
         self.send_command(GEARMAN_COMMAND_WORK_COMPLETE, job_handle=current_job.handle, data=self.encode_data(data))
 
     def send_job_failure(self, current_job):
-        """Removes a job from the queue if its backgrounded"""
+        """Removes a job from the queue if it's backgrounded"""
         self.send_command(GEARMAN_COMMAND_WORK_FAIL, job_handle=current_job.handle)
 
     def send_job_exception(self, current_job, data):
