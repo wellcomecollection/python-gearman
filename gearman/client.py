@@ -84,7 +84,7 @@ class GearmanClient(GearmanConnectionManager):
 
         # Optionally, we'll allow a user to wait until all jobs are complete with the same poll_timeout
         time_remaining = stopwatch.get_time_remaining()
-        if wait_until_complete and bool(time_remaining != 0.0):
+        if wait_until_complete and (time_remaining != 0.0):
             processed_requests = self.wait_until_jobs_completed(processed_requests, poll_timeout=time_remaining)
 
         return processed_requests

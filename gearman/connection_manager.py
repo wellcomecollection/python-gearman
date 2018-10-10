@@ -192,10 +192,12 @@ class GearmanConnectionManager(object):
         connection_ok = any(current_connection.connected for current_connection in submitted_connections)
         poller = gearman.io.get_connection_poller()
         if connection_ok:
-            self._register_connections_with_poller(submitted_connections,
-                    poller)
-            connection_map = dict([(c.fileno(), c) for c in
-                submitted_connections if c.connected])
+            self._register_connections_with_poller(submitted_connections, poller)
+            connection_map = {
+                conn.fileno(): conn
+                for conn in submitted_connections
+                if conn.connected
+            }
 
         while connection_ok and callback_ok:
             time_remaining = stopwatch.get_time_remaining()
