@@ -13,6 +13,40 @@ from gearman.errors import ConnectionError, ServerUnavailable, ProtocolError
 from tests._core_testing import _GearmanAbstractTest
 
 
+@pytest.mark.parametrize('cmd_type,cmd_args', [
+    # Assert we get an unknown command
+    (1234, {}),
+
+    # Assert we get a fake command
+    (protocol.GEARMAN_COMMAND_TEXT_COMMAND, {}),
+
+    # Assert we get arg mismatch, got 1, expecting 0
+    (protocol.GEARMAN_COMMAND_GRAB_JOB, {u"extra": u"arguments"}),
+
+    # Assert we get arg mismatch, got 0, expecting 1
+    (protocol.GEARMAN_COMMAND_JOB_CREATED, {}),
+
+    # Assert we get arg mismatch (name), got 1, expecting 1
+    (protocol.GEARMAN_COMMAND_JOB_CREATED, {u"extra": "arguments"}),
+
+    # Assert we get a non-string argument
+    (protocol.GEARMAN_COMMAND_JOB_CREATED, {u"job_handle": 12345}),
+
+    # Assert we get a non-string argument (expecting BYTES)
+    (protocol.GEARMAN_COMMAND_JOB_CREATED, {u"job_handle": u"12345"}),
+
+    # Assert we check for NULLs in all but the "last" argument,
+    # where last depends on the cmd_type.
+    (protocol.GEARMAN_COMMAND_SUBMIT_JOB,
+     {u"task": b"funct\x00ion", u"data": b"abcd", u"unique": b"12345"}),
+    (protocol.GEARMAN_COMMAND_SUBMIT_JOB,
+     {u"task": b"function", u"data": b"abcd", u"unique": b"123\x00\x0045"}),
+])
+def test_packing_errors(cmd_type, cmd_args):
+    with pytest.raises(ProtocolError):
+        protocol.pack_binary_command(cmd_type=cmd_type, cmd_args=cmd_args)
+
+
 class ProtocolBinaryCommandsTest(unittest.TestCase):
     #######################
     # Begin parsing tests #
@@ -129,55 +163,12 @@ class ProtocolBinaryCommandsTest(unittest.TestCase):
     # Begin packing tests #
     #######################
     def test_packing_errors(self):
-        # Assert we get an unknown command
-        cmd_type = 1234
-        cmd_args = dict()
-        self.assertRaises(ProtocolError, protocol.pack_binary_command, cmd_type, cmd_args)
-
-        # Assert we get a fake command
-        cmd_type = protocol.GEARMAN_COMMAND_TEXT_COMMAND
-        cmd_args = dict()
-        self.assertRaises(ProtocolError, protocol.pack_binary_command, cmd_type, cmd_args)
-
-        # Assert we get arg mismatch, got 1, expecting 0
-        cmd_type = protocol.GEARMAN_COMMAND_GRAB_JOB
-        cmd_args = dict(extra='arguments')
-        self.assertRaises(ProtocolError, protocol.pack_binary_command, cmd_type, cmd_args)
-
-        # Assert we get arg mismatch, got 0, expecting 1
-        cmd_type = protocol.GEARMAN_COMMAND_JOB_CREATED
-        cmd_args = dict()
-        self.assertRaises(ProtocolError, protocol.pack_binary_command, cmd_type, cmd_args)
-
-        # Assert we get arg mismatch (name), got 1, expecting 1
-        cmd_type = protocol.GEARMAN_COMMAND_JOB_CREATED
-        cmd_args = dict(extra='arguments')
-        self.assertRaises(ProtocolError, protocol.pack_binary_command, cmd_type, cmd_args)
-
-        # Assert we get a non-string argument
-        cmd_type = protocol.GEARMAN_COMMAND_JOB_CREATED
-        cmd_args = dict(job_handle=12345)
-        self.assertRaises(ProtocolError, protocol.pack_binary_command, cmd_type, cmd_args)
-
-        # Assert we get a non-string argument (expecting BYTES)
-        cmd_type = protocol.GEARMAN_COMMAND_JOB_CREATED
-        cmd_args = {"job_handle": u"12345"}
-        self.assertRaises(ProtocolError, protocol.pack_binary_command, cmd_type, cmd_args)
-
-        # Assert we check for NULLs in all but the "last" argument, where last depends on the cmd_type.
-        cmd_type = protocol.GEARMAN_COMMAND_SUBMIT_JOB
-        cmd_args = dict(task='funct\x00ion', data='abcd', unique='12345')
-        self.assertRaises(ProtocolError, protocol.pack_binary_command, cmd_type, cmd_args)
-
-        # Assert we check for NULLs in all but the "last" argument, where last depends on the cmd_type.
-        cmd_type = protocol.GEARMAN_COMMAND_SUBMIT_JOB
-        cmd_args = dict(task='function', data='ab\x00cd', unique='12345')
-        protocol.pack_binary_command(cmd_type, cmd_args) # Should not raise, 'data' is last.
-
-        # Assert we check for NULLs in all but the "last" argument, where last depends on the cmd_type.
-        cmd_type = protocol.GEARMAN_COMMAND_SUBMIT_JOB
-        cmd_args = dict(task='function', data='abcd', unique='123\x0045')
-        self.assertRaises(ProtocolError, protocol.pack_binary_command, cmd_type, cmd_args)
+        # Assert we check for NULLs in all but the "last" argument,
+        # where last depends on the cmd_type.
+        protocol.pack_binary_command(
+            cmd_type=protocol.GEARMAN_COMMAND_SUBMIT_JOB,
+            cmd_args={u"task": b"function", u"data": b"ab\x00cd", u"unique": b"12345"}
+        )
 
     def test_packing_response(self):
         # Test packing a response for a job (server side packing)
