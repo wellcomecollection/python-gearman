@@ -269,6 +269,31 @@ class CommandHandlerStateMachineTest(_StateMachineTest):
             self.recv_server_response(b'123')
 
 
+class TestGearmanAdminClientCommandHandler:
+
+    command_handler = GearmanAdminClientCommandHandler(
+        connection_manager=MockGearmanAdminClient()
+    )
+
+    @pytest.mark.parametrize('non_bytes', [1, None, object, u"123"])
+    def test_decode_data(self, non_bytes):
+        with pytest.raises(TypeError, match="Expecting byte string"):
+            self.command_handler.decode_data(non_bytes)
+
+    @pytest.mark.parametrize('non_bytes', [1, None, object, u"123"])
+    def test_encode_data(self, non_bytes):
+        with pytest.raises(TypeError, match="Expecting byte string"):
+            self.command_handler.encode_data(non_bytes)
+
+    def test_decodes_data_correctly(self):
+        print(self.command_handler.decode_data(b"123"))
+        assert 0
+
+    def test_encodes_data_correctly(self):
+        print(self.command_handler.encode_data(b"123"))
+        assert 0
+
+
 class BrokenCommandHandler(GearmanAdminClientCommandHandler):
     recv_server_show_jobs = None
 
