@@ -10,6 +10,7 @@ from gearman.errors import ConnectionError, ServerUnavailable, ProtocolError
 
 from tests._core_testing import _GearmanAbstractTest
 
+
 class ProtocolBinaryCommandsTest(unittest.TestCase):
     #######################
     # Begin parsing tests #
@@ -96,7 +97,7 @@ class ProtocolBinaryCommandsTest(unittest.TestCase):
         self.assertEquals(cmd_len, len(echo_command_buffer))
 
     def test_parsing_single_arg_with_extra_data(self):
-        echoed_string = 'abcd'
+        echoed_string = b'abcd'
         excess_bytes = 5
         excess_data = echoed_string + (protocol.NULL_CHAR * excess_bytes)
         excess_echo_command_buffer = struct.pack('!4sII9s', protocol.MAGIC_RES_STRING, protocol.GEARMAN_COMMAND_ECHO_RES, 4, excess_data)
@@ -110,7 +111,7 @@ class ProtocolBinaryCommandsTest(unittest.TestCase):
     def test_parsing_multiple_args(self):
         # Tests ordered argument processing and proper NULL_CHAR splitting
         expected_data = protocol.NULL_CHAR * 4
-        binary_payload = protocol.NULL_CHAR.join(['test', 'function', 'identifier', expected_data])
+        binary_payload = protocol.NULL_CHAR.join([b'test', b'function', b'identifier', expected_data])
         payload_size = len(binary_payload)
 
         uniq_command_buffer = struct.pack('!4sII%ds' % payload_size, protocol.MAGIC_RES_STRING, protocol.GEARMAN_COMMAND_JOB_ASSIGN_UNIQ, payload_size, binary_payload)
@@ -204,7 +205,7 @@ class ProtocolBinaryCommandsTest(unittest.TestCase):
 
     def test_packing_multiple_args(self):
         cmd_type = protocol.GEARMAN_COMMAND_SUBMIT_JOB
-        cmd_args = dict(task='function', unique='12345', data='abcd')
+        cmd_args = dict(task='function', unique='12345', data=b'abcd')
 
         ordered_parameters = [cmd_args['task'], cmd_args['unique'], cmd_args['data']]
 
