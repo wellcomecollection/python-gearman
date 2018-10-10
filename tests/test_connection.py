@@ -3,7 +3,7 @@
 import pytest
 
 from gearman import connection
-from gearman.errors import ServerUnavailable
+from gearman.errors import ConnectionError, ServerUnavailable
 
 
 def test_no_host_is_ServerUnavailable():
@@ -29,3 +29,9 @@ def test_use_ssl_only_if_all_three_files(keyfile, certfile, ca_certs, expected_u
         ca_certs=ca_certs
     )
     assert conn.use_ssl == expected_use_ssl
+
+
+def test_no_socket_means_no_fileno():
+    conn = connection.GearmanConnection(host='localhost')
+    with pytest.raises(ConnectionError, match='no socket set'):
+        conn.fileno()
