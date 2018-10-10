@@ -260,7 +260,7 @@ def pack_binary_command(cmd_type, cmd_args, is_response=False):
     data_items = [cmd_args[param] for param in expected_cmd_params]
 
     # Now check that all but the last argument are free of \0 as per the protocol spec.
-    if any('\0' in argument for argument in data_items[:-1]):
+    if any(b'\0' in argument for argument in data_items[:-1]):
         raise ProtocolError('Received arguments with NULL byte in non-final argument')
 
     binary_payload = NULL_CHAR.join(data_items)
