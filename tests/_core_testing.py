@@ -55,7 +55,6 @@ class _GearmanAbstractTest(unittest.TestCase):
     command_handler_class = None
 
     job_class = GearmanJob
-    job_request_class = GearmanJobRequest
 
     def setUp(self):
         # Create a new MockGearmanTestClient on the fly
@@ -87,7 +86,11 @@ class _GearmanAbstractTest(unittest.TestCase):
     def generate_job_request(self, priority=PRIORITY_NONE, background=False):
         job_handle = str(random.random())
         current_job = self.job_class(connection=self.connection, handle=job_handle, task='__test_ability__', unique=str(random.random()), data=str(random.random()))
-        current_request = self.job_request_class(current_job, initial_priority=priority, background=background)
+        current_request = GearmanJobRequest(
+            current_job,
+            initial_priority=priority,
+            background=background
+        )
 
         self.assertEqual(current_request.state, JOB_UNKNOWN)
 

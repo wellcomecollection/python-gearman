@@ -1,4 +1,4 @@
-import unittest
+# -*- encoding: utf-8
 
 from gearman.admin_client import GearmanAdminClient, ECHO_STRING
 from gearman.admin_client_handler import GearmanAdminClientCommandHandler
@@ -32,7 +32,7 @@ class CommandHandlerStateMachineTest(_GearmanAbstractTest):
 
         self.command_handler.recv_command(GEARMAN_COMMAND_ECHO_RES, data=ECHO_STRING)
         server_response = self.pop_response(GEARMAN_COMMAND_ECHO_REQ)
-        self.assertEquals(server_response, ECHO_STRING)
+        assert server_response == ECHO_STRING
 
     def test_state_and_protocol_errors_for_status(self):
         self.send_server_command(GEARMAN_SERVER_COMMAND_STATUS)
@@ -75,7 +75,7 @@ class CommandHandlerStateMachineTest(_GearmanAbstractTest):
         self.recv_server_response(expected_version)
 
         server_response = self.pop_response(GEARMAN_SERVER_COMMAND_VERSION)
-        self.assertEquals(expected_version, server_response)
+        assert expected_version == server_response
 
     def test_state_and_protocol_errors_for_workers(self):
         self.send_server_command(GEARMAN_SERVER_COMMAND_WORKERS)
@@ -90,7 +90,7 @@ class CommandHandlerStateMachineTest(_GearmanAbstractTest):
         self.recv_server_response('.')
 
         server_response = self.pop_response(GEARMAN_SERVER_COMMAND_WORKERS)
-        self.assertEquals(server_response, tuple())
+        assert server_response == ()
 
     def test_multiple_workers(self):
         self.send_server_command(GEARMAN_SERVER_COMMAND_WORKERS)
@@ -99,18 +99,18 @@ class CommandHandlerStateMachineTest(_GearmanAbstractTest):
         self.recv_server_response('.')
 
         server_response = self.pop_response(GEARMAN_SERVER_COMMAND_WORKERS)
-        self.assertEquals(len(server_response), 2)
+        assert len(server_response) == 2
 
         test_response, another_response = server_response
-        self.assertEquals(test_response['file_descriptor'], '12')
-        self.assertEquals(test_response['ip'], 'IP-A')
-        self.assertEquals(test_response['client_id'], 'CLIENT-A')
-        self.assertEquals(test_response['tasks'],  ('function-A', 'function-B'))
+        assert test_response['file_descriptor'] == '12'
+        assert test_response['ip'] == 'IP-A'
+        assert test_response['client_id'] == 'CLIENT-A'
+        assert test_response['tasks'] == ('function-A', 'function-B')
 
-        self.assertEquals(another_response['file_descriptor'], '13')
-        self.assertEquals(another_response['ip'], 'IP-B')
-        self.assertEquals(another_response['client_id'], 'CLIENT-B')
-        self.assertEquals(another_response['tasks'],  ('function-C', ))
+        assert another_response['file_descriptor'] == '13'
+        assert another_response['ip'] == 'IP-B'
+        assert another_response['client_id'] == 'CLIENT-B'
+        assert another_response['tasks'] == ('function-C', )
 
     def test_maxqueue(self):
         self.send_server_command(GEARMAN_SERVER_COMMAND_MAXQUEUE)
@@ -121,7 +121,7 @@ class CommandHandlerStateMachineTest(_GearmanAbstractTest):
 
         self.recv_server_response('OK')
         server_response = self.pop_response(GEARMAN_SERVER_COMMAND_MAXQUEUE)
-        self.assertEquals(server_response, 'OK')
+        assert server_response == 'OK'
 
     def test_shutdown(self):
         self.send_server_command(GEARMAN_SERVER_COMMAND_SHUTDOWN)
@@ -131,7 +131,7 @@ class CommandHandlerStateMachineTest(_GearmanAbstractTest):
 
         self.recv_server_response(None)
         server_response = self.pop_response(GEARMAN_SERVER_COMMAND_SHUTDOWN)
-        self.assertEquals(server_response, None)
+        assert server_response is None
 
     def send_server_command(self, expected_command):
         self.command_handler.send_text_command(expected_command)
@@ -145,9 +145,6 @@ class CommandHandlerStateMachineTest(_GearmanAbstractTest):
 
     def pop_response(self, expected_command):
         server_cmd, server_response = self.command_handler.pop_response()
-        self.assertEquals(expected_command, server_cmd)
+        assert expected_command == server_cmd
 
         return server_response
-
-if __name__ == '__main__':
-    unittest.main()

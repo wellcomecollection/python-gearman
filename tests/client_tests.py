@@ -1,6 +1,7 @@
+# -*- encoding: utf-8
+
 import collections
 import random
-import unittest
 
 from gearman.client import GearmanClient
 from gearman.client_handler import GearmanClientCommandHandler
@@ -56,11 +57,11 @@ class ClientTest(_GearmanAbstractTest):
 
         # When we first create our request, our client shouldn't know anything about it
         current_request = self.generate_job_request(submitted=False, accepted=False)
-        self.failIf(current_request in self.connection_manager.request_to_rotating_connection_queue)
+        assert current_request not in self.connection_manager.request_to_rotating_connection_queue
 
         # Make sure that when we start up, we get our good connection
         chosen_connection = self.connection_manager.establish_request_connection(current_request)
-        self.assertEqual(chosen_connection, good_connection)
+        assert chosen_connection == good_connection
 
         self.assertFalse(failed_connection.connected)
         self.assertFalse(failed_then_retried_connection.connected)
@@ -68,7 +69,7 @@ class ClientTest(_GearmanAbstractTest):
 
         # No state changed so we should still go to the correct connection
         chosen_connection = self.connection_manager.establish_request_connection(current_request)
-        self.assertEqual(chosen_connection, good_connection)
+        assert chosen_connection == good_connection
 
         # Pretend like our good connection died so we'll need to choose somethign else
         good_connection._reset_connection()
@@ -79,7 +80,7 @@ class ClientTest(_GearmanAbstractTest):
 
         # Make sure we rotate good_connection and failed_connection out
         chosen_connection = self.connection_manager.establish_request_connection(current_request)
-        self.assertEqual(chosen_connection, failed_then_retried_connection)
+        assert chosen_connection == failed_then_retried_connection
         self.assertFalse(failed_connection.connected)
         self.assertTrue(failed_then_retried_connection.connected)
         self.assertFalse(good_connection.connected)
@@ -117,7 +118,7 @@ class ClientTest(_GearmanAbstractTest):
                 # So we don't bail out of the "self.connection_manager.poll_connections_until_stopped" loop
                 self.connection_manager.establish_connection(self.connection)
             else:
-                self.assertEquals(current_request.state, JOB_PENDING)
+                assert current_request.state == JOB_PENDING
                 self.command_handler.recv_command(GEARMAN_COMMAND_JOB_CREATED, job_handle=current_request.job.handle)
 
             return rx_conns, wr_conns, ex_conns
@@ -132,8 +133,8 @@ class ClientTest(_GearmanAbstractTest):
         current_request.state = JOB_UNKNOWN
 
         accepted_jobs = self.connection_manager.wait_until_jobs_accepted([current_request])
-        self.assertEquals(current_request.state, JOB_CREATED)
-        self.assertEquals(current_request.connection_attempts, current_request.max_connection_attempts)
+        assert current_request.state == JOB_CREATED
+        assert current_request.connection_attempts == current_request.max_connection_attempts
 
         # Second pass should fail as we JUST exceed our max attempts
         self.connection_manager.current_failures = current_request.connection_attempts = 0
@@ -141,8 +142,8 @@ class ClientTest(_GearmanAbstractTest):
         current_request.state = JOB_UNKNOWN
 
         self.assertRaises(ExceededConnectionAttempts, self.connection_manager.wait_until_jobs_accepted, [current_request])
-        self.assertEquals(current_request.state, JOB_UNKNOWN)
-        self.assertEquals(current_request.connection_attempts, current_request.max_connection_attempts)
+        assert current_request.state == JOB_UNKNOWN
+        assert current_request.connection_attempts == current_request.max_connection_attempts
 
     def test_multiple_fg_job_submission(self):
         submitted_job_count = 5
@@ -163,9 +164,9 @@ class ClientTest(_GearmanAbstractTest):
             current_job = current_request.job
             self.assert_jobs_equal(current_job, expected_job)
 
-            self.assertEqual(current_request.priority, PRIORITY_NONE)
-            self.assertEqual(current_request.background, False)
-            self.assertEqual(current_request.state, JOB_CREATED)
+            assert current_request.priority == PRIORITY_NONE
+            assert current_request.background == False
+            assert current_request.state == JOB_CREATED
 
             self.assertFalse(current_request.complete)
 
@@ -181,9 +182,9 @@ class ClientTest(_GearmanAbstractTest):
         current_job = job_request.job
         self.assert_jobs_equal(current_job, expected_job)
 
-        self.assertEqual(job_request.priority, PRIORITY_LOW)
-        self.assertEqual(job_request.background, True)
-        self.assertEqual(job_request.state, JOB_CREATED)
+        assert job_request.priority == PRIORITY_LOW
+        assert job_request.background == True
+        assert job_request.state == JOB_CREATED
 
         self.assertTrue(job_request.complete)
 
@@ -195,12 +196,33 @@ class ClientTest(_GearmanAbstractTest):
         self.connection_manager.handle_connection_activity = job_failed_submission
         job_request = self.connection_manager.submit_job(expected_job.task, expected_job.data, unique=expected_job.unique, priority=PRIORITY_HIGH, poll_timeout=0.01)
 
-        self.assertEqual(job_request.priority, PRIORITY_HIGH)
-        self.assertEqual(job_request.background, False)
-        self.assertEqual(job_request.state, JOB_PENDING)
+        assert job_request.priority == PRIORITY_HIGH
+        assert job_request.background == False
+        assert job_request.state == JOB_PENDING
 
         self.assertFalse(job_request.complete)
         self.assertTrue(job_request.timed_out)
+
+    def test_single_fg_job_submission_timeout_unspecified_unique(self):
+        expected_job = self.generate_job()
+        def job_failed_submission(rx_conns, wr_conns, ex_conns):
+            return rx_conns, wr_conns, ex_conns
+
+        self.connection_manager.handle_connection_activity = job_failed_submission
+        job_request = self.connection_manager.submit_job(
+            expected_job.task,
+            expected_job.data,
+            unique=None,
+            priority=PRIORITY_HIGH,
+            poll_timeout=0.01
+        )
+
+        assert job_request.priority == PRIORITY_HIGH
+        assert job_request.background == False
+        assert job_request.state == JOB_PENDING
+
+        assert not job_request.complete
+        assert job_request.timed_out
 
     def test_wait_for_multiple_jobs_to_complete_or_timeout(self):
         completed_request = self.generate_job_request()
@@ -225,19 +247,19 @@ class ClientTest(_GearmanAbstractTest):
         finished_completed_request, finished_failed_request, finished_timeout_request = finished_requests
 
         self.assert_jobs_equal(finished_completed_request.job, completed_request.job)
-        self.assertEqual(finished_completed_request.state, JOB_COMPLETE)
+        assert finished_completed_request.state == JOB_COMPLETE
         self.assertEqual(finished_completed_request.result, '12345')
         self.assertFalse(finished_completed_request.timed_out)
         #self.assert_(finished_completed_request.job.handle not in self.command_handler.handle_to_request_map)
 
         self.assert_jobs_equal(finished_failed_request.job, failed_request.job)
-        self.assertEqual(finished_failed_request.state, JOB_FAILED)
-        self.assertEqual(finished_failed_request.result, None)
+        assert finished_failed_request.state == JOB_FAILED
+        assert finished_failed_request.result is None
         self.assertFalse(finished_failed_request.timed_out)
         #self.assert_(finished_failed_request.job.handle not in self.command_handler.handle_to_request_map)
 
-        self.assertEqual(finished_timeout_request.state, JOB_CREATED)
-        self.assertEqual(finished_timeout_request.result, None)
+        assert finished_timeout_request.state == JOB_CREATED
+        assert finished_timeout_request.result is None
         self.assertTrue(finished_timeout_request.timed_out)
         self.assert_(finished_timeout_request.job.handle in self.command_handler.handle_to_request_map)
 
@@ -252,7 +274,7 @@ class ClientTest(_GearmanAbstractTest):
 
         job_request = self.connection_manager.get_job_status(single_request)
         request_status = job_request.status
-        self.failUnless(request_status)
+        assert request_status
         self.assertTrue(request_status['known'])
         self.assertFalse(request_status['running'])
         self.assertEqual(request_status['numerator'], 0)
@@ -272,7 +294,7 @@ class ClientTest(_GearmanAbstractTest):
 
         job_request = self.connection_manager.get_job_status(single_request)
         request_status = job_request.status
-        self.failUnless(request_status)
+        assert request_status
         self.assertFalse(request_status['known'])
         self.assertFalse(request_status['running'])
         self.assertEqual(request_status['numerator'], 0)
@@ -310,7 +332,7 @@ class ClientCommandHandlerInterfaceTest(_GearmanAbstractTest):
                 self.command_handler.send_job_request(current_request)
 
                 queued_request = self.command_handler.requests_awaiting_handles.popleft()
-                self.assertEqual(queued_request, current_request)
+                assert queued_request == current_request
 
                 expected_cmd_type = submit_cmd_for_background_priority(background, priority)
                 self.assert_sent_command(expected_cmd_type, task=gearman_job.task, data=gearman_job.data, unique=gearman_job.unique)
@@ -345,8 +367,8 @@ class ClientCommandHandlerStateMachineTest(_GearmanAbstractTest):
         new_handle = str(random.random())
         self.command_handler.recv_command(GEARMAN_COMMAND_JOB_CREATED, job_handle=new_handle)
 
-        self.assertEqual(current_request.job.handle, new_handle)
-        self.assertEqual(current_request.state, JOB_CREATED)
+        assert current_request.job.handle == new_handle
+        assert current_request.state == JOB_CREATED
         self.assertEqual(self.command_handler.handle_to_request_map[new_handle], current_request)
 
     def test_received_job_created_out_of_order(self):
@@ -399,18 +421,18 @@ class ClientCommandHandlerStateMachineTest(_GearmanAbstractTest):
         # Test WORK_DATA
         self.command_handler.recv_command(GEARMAN_COMMAND_WORK_DATA, job_handle=job_handle, data=new_data)
         self.assertEqual(current_request.data_updates.popleft(), new_data)
-        self.assertEqual(current_request.state, JOB_CREATED)
+        assert current_request.state == JOB_CREATED
 
         # Test WORK_WARNING
         self.command_handler.recv_command(GEARMAN_COMMAND_WORK_WARNING, job_handle=job_handle, data=new_data)
         self.assertEqual(current_request.warning_updates.popleft(), new_data)
-        self.assertEqual(current_request.state, JOB_CREATED)
+        assert current_request.state == JOB_CREATED
 
         # Test WORK_STATUS
         self.command_handler.recv_command(GEARMAN_COMMAND_WORK_STATUS, job_handle=job_handle, numerator=0, denominator=1)
 
         self.assertEqual(current_request.status_updates.popleft(), (0, 1))
-        self.assertEqual(current_request.state, JOB_CREATED)
+        assert current_request.state == JOB_CREATED
 
     def test_work_complete(self):
         current_request = self.generate_job_request()
@@ -419,8 +441,8 @@ class ClientCommandHandlerStateMachineTest(_GearmanAbstractTest):
         new_data = str(random.random())
         self.command_handler.recv_command(GEARMAN_COMMAND_WORK_COMPLETE, job_handle=job_handle, data=new_data)
 
-        self.assertEqual(current_request.result, new_data)
-        self.assertEqual(current_request.state, JOB_COMPLETE)
+        assert current_request.result == new_data
+        assert current_request.state == JOB_COMPLETE
 
     def test_work_fail(self):
         current_request = self.generate_job_request()
@@ -429,7 +451,7 @@ class ClientCommandHandlerStateMachineTest(_GearmanAbstractTest):
         new_data = str(random.random())
         self.command_handler.recv_command(GEARMAN_COMMAND_WORK_FAIL, job_handle=job_handle)
 
-        self.assertEqual(current_request.state, JOB_FAILED)
+        assert current_request.state == JOB_FAILED
 
     def test_status_request(self):
         current_request = self.generate_job_request()
@@ -445,6 +467,3 @@ class ClientCommandHandlerStateMachineTest(_GearmanAbstractTest):
         self.assertTrue(current_request.status['running'])
         self.assertEqual(current_request.status['numerator'], 0)
         self.assertEqual(current_request.status['denominator'], 1)
-
-if __name__ == '__main__':
-    unittest.main()

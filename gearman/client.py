@@ -1,5 +1,6 @@
+# -*- encoding: utf-8
+
 import collections
-from gearman import compat
 import logging
 import os
 import random
@@ -11,6 +12,7 @@ from gearman.connection_manager import GearmanConnectionManager
 from gearman.client_handler import GearmanClientCommandHandler
 from gearman.constants import PRIORITY_NONE, PRIORITY_LOW, PRIORITY_HIGH, JOB_UNKNOWN, JOB_PENDING
 from gearman.errors import ConnectionError, ExceededConnectionAttempts, ServerUnavailable
+from gearman.job import GearmanJobRequest
 
 gearman_logger = logging.getLogger(__name__)
 
@@ -30,25 +32,40 @@ class GearmanClient(GearmanConnectionManager):
 
         # The authoritative copy of all requests that this client knows about
         # Ignores the fact if a request has been bound to a connection or not
-        self.request_to_rotating_connection_queue = weakref.WeakKeyDictionary(compat.defaultdict(collections.deque))
+        self.request_to_rotating_connection_queue = weakref.WeakKeyDictionary(
+            collections.defaultdict(collections.deque))
 
-    def submit_job(self, task, data, unique=None, priority=PRIORITY_NONE, background=False, wait_until_complete=True, max_retries=0, poll_timeout=None):
+    def submit_job(self, task, data, unique=None, priority=PRIORITY_NONE, **kwargs):
         """Submit a single job to any gearman server"""
-        job_info = dict(task=task, data=data, unique=unique, priority=priority)
-        completed_job_list = self.submit_multiple_jobs([job_info], background=background, wait_until_complete=wait_until_complete, max_retries=max_retries, poll_timeout=poll_timeout)
+        job_info = {
+            "task": task,
+            "data": data,
+            "unique": unique,
+            "priority": priority,
+        }
+        completed_job_list = self.submit_multiple_jobs(
+            jobs_to_submit=[job_info], **kwargs
+        )
         return gearman.util.unlist(completed_job_list)
 
-    def submit_multiple_jobs(self, jobs_to_submit, background=False, wait_until_complete=True, max_retries=0, poll_timeout=None):
-        """Takes a list of jobs_to_submit with dicts of
+    def submit_multiple_jobs(self, jobs_to_submit, background=False, max_retries=0, **kwargs):
+        """
+        Takes a list of jobs as dicts with keys ["task", "data", "unique", "priority"],
+        creates a job for them, assign them connections, and request that they be done.
 
-        {'task': task, 'data': data, 'unique': unique, 'priority': priority}
         """
         assert type(jobs_to_submit) in (list, tuple, set), "Expected multiple jobs, received 1?"
 
         # Convert all job dicts to job request objects
-        requests_to_submit = [self._create_request_from_dictionary(job_info, background=background, max_retries=max_retries) for job_info in jobs_to_submit]
+        requests_to_submit = [
+            self._create_request_from_dictionary(
+                job_info,
+                background=background,
+                max_retries=max_retries
+            ) for job_info in jobs_to_submit
+        ]
 
-        return self.submit_multiple_requests(requests_to_submit, wait_until_complete=wait_until_complete, poll_timeout=poll_timeout)
+        return self.submit_multiple_requests(requests_to_submit, **kwargs)
 
     def submit_multiple_requests(self, job_requests, wait_until_complete=True, poll_timeout=None):
         """Take GearmanJobRequests, assign them connections, and request that they be done.
@@ -67,7 +84,7 @@ class GearmanClient(GearmanConnectionManager):
 
         # Optionally, we'll allow a user to wait until all jobs are complete with the same poll_timeout
         time_remaining = stopwatch.get_time_remaining()
-        if wait_until_complete and bool(time_remaining != 0.0):
+        if wait_until_complete and (time_remaining != 0.0):
             processed_requests = self.wait_until_jobs_completed(processed_requests, poll_timeout=time_remaining)
 
         return processed_requests
@@ -86,7 +103,7 @@ class GearmanClient(GearmanConnectionManager):
                 if current_request.state == JOB_UNKNOWN:
                     self.send_job_request(current_request)
 
-            return compat.any(is_request_pending(current_request) for current_request in job_requests)
+            return any(is_request_pending(current_request) for current_request in job_requests)
 
         self.poll_connections_until_stopped(self.connection_list, continue_while_jobs_pending, timeout=poll_timeout)
 
@@ -165,7 +182,11 @@ class GearmanClient(GearmanConnectionManager):
         return job_requests
 
     def _create_request_from_dictionary(self, job_info, background=False, max_retries=0):
-        """Takes a dictionary with fields  {'task': task, 'unique': unique, 'data': data, 'priority': priority, 'background': background}"""
+        """
+        Takes a dictionary with fields ["task", "unique", "data", "priority"] and
+        returns the corresponding ``GearmanJobRequest``.
+
+        """
         # Make sure we have a unique identifier for ALL our tasks
         job_unique = job_info.get('unique')
         if not job_unique:
@@ -176,8 +197,12 @@ class GearmanClient(GearmanConnectionManager):
         initial_priority = job_info.get('priority', PRIORITY_NONE)
 
         max_attempts = max_retries + 1
-        current_request = self.job_request_class(current_job, initial_priority=initial_priority, background=background, max_attempts=max_attempts)
-        return current_request
+        return GearmanJobRequest(
+            current_job,
+            initial_priority=initial_priority,
+            background=background,
+            max_attempts=max_attempts
+        )
 
     def establish_request_connection(self, current_request):
         """Return a live connection for the given hash"""

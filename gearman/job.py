@@ -62,11 +62,6 @@ class GearmanJobRequest(object):
         return output_queue
 
     @property
-    def server_status(self):
-        """Deprecated since 2.0.1, removing in next major release"""
-        return self.status
-
-    @property
     def job(self):
         return self.gearman_job
 

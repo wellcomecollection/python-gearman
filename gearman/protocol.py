@@ -1,11 +1,13 @@
 import struct
+
+from . import compat
 from gearman.constants import PRIORITY_NONE, PRIORITY_LOW, PRIORITY_HIGH
 from gearman.errors import ProtocolError
-from gearman import compat
+
 # Protocol specific constants
-NULL_CHAR = '\x00'
-MAGIC_RES_STRING = '%sRES' % NULL_CHAR
-MAGIC_REQ_STRING = '%sREQ' % NULL_CHAR
+NULL_CHAR = b'\x00'
+MAGIC_RES_STRING = b'%sRES' % NULL_CHAR
+MAGIC_REQ_STRING = b'%sREQ' % NULL_CHAR
 
 COMMAND_HEADER_SIZE = 12
 
@@ -153,6 +155,7 @@ GEARMAN_SERVER_COMMAND_SHOW_JOBS = 'show jobs'
 GEARMAN_SERVER_COMMAND_SHOW_UNIQUE_JOBS = 'show unique jobs'
 GEARMAN_SERVER_COMMAND_CANCEL_JOB = 'cancel job'
 
+
 def get_command_name(cmd_type):
     return GEARMAN_COMMAND_TO_NAME.get(cmd_type, cmd_type)
 
@@ -192,13 +195,15 @@ def parse_binary_command(in_buffer, is_response=True):
     if received_bad_response or received_bad_request:
         raise ProtocolError('Malformed Magic')
 
-    expected_cmd_params = GEARMAN_PARAMS_FOR_COMMAND.get(cmd_type, None)
+    expected_cmd_params = GEARMAN_PARAMS_FOR_COMMAND.get(cmd_type)
 
-    # GEARMAN_COMMAND_TEXT_COMMAND is a faked command that we use to support server text-based commands
-    if expected_cmd_params is None or cmd_type == GEARMAN_COMMAND_TEXT_COMMAND:
+    # GEARMAN_COMMAND_TEXT_COMMAND is a faked command that we use to support
+    # server text-based commands
+    if (expected_cmd_params is None) or (cmd_type == GEARMAN_COMMAND_TEXT_COMMAND):
         raise ProtocolError('Received unknown binary command: %s' % cmd_type)
 
-    # If everything indicates this is a valid command, we should check to see if we have enough stuff to read in our buffer
+    # If everything indicates this is a valid command, we should check to see
+    # if we have enough stuff to read in our buffer
     expected_packet_size = COMMAND_HEADER_SIZE + cmd_len
     if in_buffer_size < expected_packet_size:
         return None, None, 0
@@ -206,8 +211,8 @@ def parse_binary_command(in_buffer, is_response=True):
     binary_payload = in_buffer[COMMAND_HEADER_SIZE:expected_packet_size]
     split_arguments = []
 
-    if len(expected_cmd_params) > 0:
-        binary_payload = binary_payload.tostring()
+    if expected_cmd_params:
+        binary_payload = compat.array_to_bytes(binary_payload)
         split_arguments = binary_payload.split(NULL_CHAR, len(expected_cmd_params) - 1)
     elif binary_payload:
         raise ProtocolError('Expected no binary payload: %s' % get_command_name(cmd_type))
@@ -241,15 +246,16 @@ def pack_binary_command(cmd_type, cmd_args, is_response=False):
     else:
         magic = MAGIC_REQ_STRING
 
-    # !NOTE! str should be replaced with bytes in Python 3.x
-    # We will iterate in ORDER and str all our command arguments
-    if compat.any(type(param_value) != str for param_value in cmd_args.itervalues()):
+    if not all(
+        isinstance(param_value, compat.binary_type)
+        for param_value in compat.itervalues(cmd_args)
+    ):
         raise ProtocolError('Received non-binary arguments: %r' % cmd_args)
 
     data_items = [cmd_args[param] for param in expected_cmd_params]
 
     # Now check that all but the last argument are free of \0 as per the protocol spec.
-    if compat.any('\0' in argument for argument in data_items[:-1]):
+    if any(b'\0' in argument for argument in data_items[:-1]):
         raise ProtocolError('Received arguments with NULL byte in non-final argument')
 
     binary_payload = NULL_CHAR.join(data_items)
@@ -264,10 +270,10 @@ def parse_text_command(in_buffer):
     cmd_type = None
     cmd_args = None
     cmd_len = 0
-    if '\n' not in in_buffer:
+    if ord(b"\n") not in in_buffer:
         return cmd_type, cmd_args, cmd_len
 
-    text_command, in_buffer = in_buffer.tostring().split('\n', 1)
+    text_command, in_buffer = compat.array_to_bytes(in_buffer).split(b'\n', 1)
     if NULL_CHAR in text_command:
         raise ProtocolError('Received unexpected character: %s' % text_command)
 

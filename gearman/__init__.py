@@ -11,11 +11,19 @@ from gearman.worker import GearmanWorker
 from gearman.connection_manager import DataEncoder
 from gearman.constants import PRIORITY_NONE, PRIORITY_LOW, PRIORITY_HIGH, JOB_PENDING, JOB_CREATED, JOB_FAILED, JOB_COMPLETE, JOB_UNKNOWN
 
-import logging
+__all__ = [
+    "GearmanAdminClient",
+    "GearmanClient",
+    "GearmanWorker",
 
-class NullHandler(logging.Handler):
-    def emit(self, record):
-        pass
+    "DataEncoder"
 
-gearman_root_logger = logging.getLogger('gearman')
-gearman_root_logger.addHandler(NullHandler())
+    "PRIORITY_NONE",
+    "PRIORITY_LOW",
+    "PRIORITY_HIGH",
+    "JOB_PENDING",
+    "JOB_CREATED",
+    "JOB_FAILED",
+    "JOB_COMPLETE",
+    "JOB_UNKNOWN",
+]

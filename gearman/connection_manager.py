@@ -6,17 +6,16 @@ from gearman.connection import GearmanConnection
 from gearman.constants import _DEBUG_MODE_
 from gearman.errors import ConnectionError, GearmanError, ServerUnavailable
 from gearman.job import GearmanJob, GearmanJobRequest
-from gearman import compat
 
 gearman_logger = logging.getLogger(__name__)
 
 class DataEncoder(object):
     @classmethod
-    def encode(cls, encodable_object):
+    def encode(cls, encodable_object):  # pragma: no cover
         raise NotImplementedError
 
     @classmethod
-    def decode(cls, decodable_string):
+    def decode(cls, decodable_string):  # pragma: no cover
         raise NotImplementedError
 
 class NoopEncoder(DataEncoder):
@@ -49,7 +48,6 @@ class GearmanConnectionManager(object):
     connection_class = GearmanConnection
 
     job_class = GearmanJob
-    job_request_class = GearmanJobRequest
 
     data_encoder = NoopEncoder
 
@@ -129,7 +127,7 @@ class GearmanConnectionManager(object):
         # a timeout of -1 when used with epoll will block until there
         # is activity. Select does not support negative timeouts, so this
         # is translated to a timeout=None when falling back to select
-        timeout = timeout or -1 
+        timeout = timeout or -1
 
         readable = set()
         writable = set()
@@ -191,13 +189,15 @@ class GearmanConnectionManager(object):
 
         any_activity = False
         callback_ok = callback_fxn(any_activity)
-        connection_ok = compat.any(current_connection.connected for current_connection in submitted_connections)
+        connection_ok = any(current_connection.connected for current_connection in submitted_connections)
         poller = gearman.io.get_connection_poller()
         if connection_ok:
-            self._register_connections_with_poller(submitted_connections, 
-                    poller)
-            connection_map = dict([(c.fileno(), c) for c in
-                submitted_connections if c.connected])
+            self._register_connections_with_poller(submitted_connections, poller)
+            connection_map = {
+                conn.fileno(): conn
+                for conn in submitted_connections
+                if conn.connected
+            }
 
         while connection_ok and callback_ok:
             time_remaining = stopwatch.get_time_remaining()
@@ -210,13 +210,13 @@ class GearmanConnectionManager(object):
             # Handle reads and writes and close all of the dead connections
             read_connections, write_connections, dead_connections = self.handle_connection_activity(read_connections, write_connections, dead_connections)
 
-            any_activity = compat.any([read_connections, write_connections, dead_connections])
+            any_activity = any([read_connections, write_connections, dead_connections])
 
             # Do not retry dead connections on the next iteration of the loop, as we closed them in handle_error
             submitted_connections -= dead_connections
 
             callback_ok = callback_fxn(any_activity)
-            connection_ok = compat.any(current_connection.connected for current_connection in submitted_connections)
+            connection_ok = any(current_connection.connected for current_connection in submitted_connections)
 
         poller.close()
 
