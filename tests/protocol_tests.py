@@ -35,6 +35,9 @@ class TestProtocolBinaryCommands(object):
 
         # Raise an error on receiving an unexpected payload
         (("!4sII4s", protocol.MAGIC_RES_STRING, protocol.GEARMAN_COMMAND_NOOP, 4, b'ABCD')),
+
+        # Raise an error when receiving some invalid Gearman data
+        (("!4sII", protocol.MAGIC_RES_STRING, protocol.GEARMAN_COMMAND_SUBMIT_JOB, 0)),
     ])
     def test_parsing_errors_struct(self, struct_components):
         data = struct.pack(*struct_components)
