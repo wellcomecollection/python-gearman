@@ -2,7 +2,6 @@
 
 from __future__ import absolute_import
 
-import logging
 import time
 
 from gearman import util
@@ -15,10 +14,10 @@ from gearman.protocol import GEARMAN_COMMAND_ECHO_REQ, \
     GEARMAN_SERVER_COMMAND_MAXQUEUE, GEARMAN_SERVER_COMMAND_SHUTDOWN, GEARMAN_SERVER_COMMAND_GETPID, \
     GEARMAN_SERVER_COMMAND_CANCEL_JOB, GEARMAN_SERVER_COMMAND_SHOW_JOBS, GEARMAN_SERVER_COMMAND_SHOW_UNIQUE_JOBS
 
-gearman_logger = logging.getLogger(__name__)
 
 ECHO_STRING = "ping? pong!"
 DEFAULT_ADMIN_CLIENT_TIMEOUT = 10.0
+
 
 class GearmanAdminClient(GearmanConnectionManager):
     """GearmanAdminClient :: Interface to send/receive administrative commands to a Gearman server
@@ -95,6 +94,7 @@ class GearmanAdminClient(GearmanConnectionManager):
 
     def wait_until_server_responds(self, expected_type):
         current_handler = self.current_handler
+
         def continue_while_no_response(any_activity):
             return (not current_handler.response_ready)
 
@@ -117,7 +117,7 @@ class GearmanAdminClient(GearmanConnectionManager):
     def cancel_job(self, handle):
         """Cancels a job"""
         self.establish_admin_connection()
-        self.current_handler.send_text_command(GEARMAN_SERVER_COMMAND_CANCEL_JOB+" "+handle)
+        self.current_handler.send_text_command(GEARMAN_SERVER_COMMAND_CANCEL_JOB + " " + handle)
         return self.wait_until_server_responds(GEARMAN_SERVER_COMMAND_CANCEL_JOB)
 
     def get_jobs(self):

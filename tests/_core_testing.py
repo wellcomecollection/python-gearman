@@ -55,6 +55,7 @@ class MockGearmanConnectionManager(GearmanConnectionManager):
     def _register_connections_with_poller(self, connections, poller):
         pass
 
+
 class _GearmanAbstractTest(unittest.TestCase):
     connection_class = MockGearmanConnection
     connection_manager_class = MockGearmanConnectionManager

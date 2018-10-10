@@ -1,3 +1,5 @@
+# -*- encoding: utf-8
+
 import array
 import collections
 import logging
@@ -12,6 +14,7 @@ from gearman.protocol import GEARMAN_PARAMS_FOR_COMMAND, GEARMAN_COMMAND_TEXT_CO
     get_command_name, pack_binary_command, parse_binary_command, parse_text_command, pack_text_command
 
 gearman_logger = logging.getLogger(__name__)
+
 
 class GearmanConnection(object):
     """A connection between a client/worker and a server.  Can be used to reconnect (unlike a socket)

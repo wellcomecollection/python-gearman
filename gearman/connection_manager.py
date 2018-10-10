@@ -6,11 +6,11 @@ from . import compat
 import gearman.io
 import gearman.util
 from gearman.connection import GearmanConnection
-from gearman.constants import _DEBUG_MODE_
 from gearman.errors import ConnectionError, GearmanError, ServerUnavailable
-from gearman.job import GearmanJob, GearmanJobRequest
+from gearman.job import GearmanJob
 
 gearman_logger = logging.getLogger(__name__)
+
 
 class DataEncoder(object):
     @classmethod
@@ -20,6 +20,7 @@ class DataEncoder(object):
     @classmethod
     def decode(cls, decodable_string):  # pragma: no cover
         raise NotImplementedError
+
 
 class NoopEncoder(DataEncoder):
     """Provide common object dumps for all communications over gearman"""
@@ -37,6 +38,7 @@ class NoopEncoder(DataEncoder):
     def decode(cls, decodable_string):
         cls._enforce_byte_string(decodable_string)
         return decodable_string
+
 
 class GearmanConnectionManager(object):
     """Abstract base class for any Gearman-type client that needs to connect/listen to multiple connections
@@ -65,7 +67,7 @@ class GearmanConnectionManager(object):
             if isinstance(element, str):
                 self.add_connection(element)
             elif isinstance(element, dict):
-                if not all (k in element for k in ('host', 'port', 'keyfile', 'certfile', 'ca_certs')):
+                if not all(k in element for k in ('host', 'port', 'keyfile', 'certfile', 'ca_certs')):
                     raise GearmanError("Incomplete SSL connection definition")
                 self.add_ssl_connection(element['host'], element['port'],
                                         element['keyfile'], element['certfile'],

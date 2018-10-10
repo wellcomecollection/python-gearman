@@ -1,4 +1,5 @@
-import logging
+# -*- encoding: utf-8
+
 import random
 import sys
 
@@ -6,9 +7,8 @@ from gearman.connection_manager import GearmanConnectionManager
 from gearman.worker_handler import GearmanWorkerCommandHandler
 from gearman.errors import ConnectionError
 
-gearman_logger = logging.getLogger(__name__)
-
 POLL_TIMEOUT_IN_SECONDS = 60.0
+
 
 class GearmanWorker(GearmanConnectionManager):
     """
@@ -153,6 +153,7 @@ class GearmanWorker(GearmanConnectionManager):
 
     def wait_until_updates_sent(self, multiple_gearman_jobs, poll_timeout=None):
         connection_set = set([current_job.connection for current_job in multiple_gearman_jobs])
+
         def continue_while_updates_pending(any_activity):
             return any(current_connection.writable() for current_connection in connection_set)
 

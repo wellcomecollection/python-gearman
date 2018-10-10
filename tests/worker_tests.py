@@ -12,6 +12,7 @@ from gearman.protocol import get_command_name, GEARMAN_COMMAND_RESET_ABILITIES, 
 
 from tests._core_testing import _GearmanAbstractTest, MockGearmanConnectionManager, MockGearmanConnection
 
+
 class MockGearmanWorker(MockGearmanConnectionManager, GearmanWorker):
     def __init__(self, *largs, **kwargs):
         super(MockGearmanWorker, self).__init__(*largs, **kwargs)
@@ -20,6 +21,7 @@ class MockGearmanWorker(MockGearmanConnectionManager, GearmanWorker):
     def on_job_execute(self, current_job):
         current_handler = self.connection_to_handler_map[current_job.connection]
         self.worker_job_queues[current_handler].append(current_job)
+
 
 class _GearmanAbstractWorkerTest(_GearmanAbstractTest):
     connection_manager_class = MockGearmanWorker
@@ -44,6 +46,7 @@ class _GearmanAbstractWorkerTest(_GearmanAbstractTest):
 
     def assert_sent_client_id(self, expected_client_id):
         self.assert_sent_command(GEARMAN_COMMAND_SET_CLIENT_ID, client_id=expected_client_id)
+
 
 class WorkerTest(_GearmanAbstractWorkerTest):
     """Test the public worker interface"""
@@ -202,6 +205,7 @@ class WorkerCommandHandlerInterfaceTest(_GearmanAbstractWorkerTest):
         # Test GEARMAN_COMMAND_WORK_WARNING
         self.command_handler.send_job_warning(current_job, b'job warning')
         self.assert_sent_command(GEARMAN_COMMAND_WORK_WARNING, job_handle=current_job.handle, data=b'job warning')
+
 
 class WorkerCommandHandlerStateMachineTest(_GearmanAbstractWorkerTest):
     """Test multiple state transitions within a GearmanWorkerCommandHandler

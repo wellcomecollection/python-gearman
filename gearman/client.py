@@ -20,6 +20,7 @@ gearman_logger = logging.getLogger(__name__)
 # This number must be <= GEARMAN_UNIQUE_SIZE in gearman/libgearman/constants.h
 RANDOM_UNIQUE_BYTES = 16
 
+
 class GearmanClient(GearmanConnectionManager):
     """
     GearmanClient :: Interface to submit jobs to a Gearman server
@@ -162,6 +163,7 @@ class GearmanClient(GearmanConnectionManager):
     def wait_until_job_statuses_received(self, job_requests, poll_timeout=None):
         """Go into a select loop until we received statuses on all our requests"""
         assert type(job_requests) in (list, tuple, set), "Expected multiple job requests, received 1?"
+
         def is_status_not_updated(current_request):
             current_status = current_request.status
             return bool(current_status.get('time_received') == current_status.get('last_time_received'))

@@ -159,6 +159,7 @@ GEARMAN_SERVER_COMMAND_CANCEL_JOB = 'cancel job'
 def get_command_name(cmd_type):
     return GEARMAN_COMMAND_TO_NAME.get(cmd_type, cmd_type)
 
+
 def submit_cmd_for_background_priority(background, priority):
     cmd_type_lookup = {
         (True, PRIORITY_NONE): GEARMAN_COMMAND_SUBMIT_JOB_BG,
@@ -171,6 +172,7 @@ def submit_cmd_for_background_priority(background, priority):
     lookup_tuple = (background, priority)
     cmd_type = cmd_type_lookup[lookup_tuple]
     return cmd_type
+
 
 def parse_binary_command(in_buffer, is_response=True):
     """Parse data and return (command type, command arguments dict, command size)
@@ -265,6 +267,7 @@ def pack_binary_command(cmd_type, cmd_args, is_response=False):
     packing_format = '!4sII%ds' % payload_size
     return struct.pack(packing_format, magic, cmd_type, payload_size, binary_payload)
 
+
 def parse_text_command(in_buffer):
     """Parse a text command and return a single line at a time"""
     cmd_type = None
@@ -283,6 +286,7 @@ def parse_text_command(in_buffer):
     cmd_len = len(text_command) + 1
 
     return cmd_type, cmd_args, cmd_len
+
 
 def pack_text_command(cmd_type, cmd_args):
     """Parse a text command and return a single line at a time"""

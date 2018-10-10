@@ -4,6 +4,7 @@ from gearman.protocol import get_command_name
 
 gearman_logger = logging.getLogger(__name__)
 
+
 class GearmanCommandHandler(object):
     """A command handler manages the state which we should be in given a certain stream of commands
 
