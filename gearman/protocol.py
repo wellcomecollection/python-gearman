@@ -211,7 +211,7 @@ def parse_binary_command(in_buffer, is_response=True):
     binary_payload = in_buffer[COMMAND_HEADER_SIZE:expected_packet_size]
     split_arguments = []
 
-    if len(expected_cmd_params) > 0:
+    if expected_cmd_params:
         binary_payload = compat.array_to_bytes(binary_payload)
         split_arguments = binary_payload.split(NULL_CHAR, len(expected_cmd_params) - 1)
     elif binary_payload:
