@@ -9,6 +9,7 @@ from gearman.errors import InvalidAdminClientState, ProtocolError
 from gearman.protocol import (
     GEARMAN_COMMAND_ECHO_RES,
     GEARMAN_COMMAND_ECHO_REQ,
+    GEARMAN_SERVER_COMMAND_CANCEL_JOB,
     GEARMAN_SERVER_COMMAND_GETPID,
     GEARMAN_SERVER_COMMAND_SHOW_JOBS,
     GEARMAN_COMMAND_TEXT_COMMAND, \
@@ -189,6 +190,17 @@ class CommandHandlerStateMachineTest(_StateMachineTest):
 
         self.recv_server_response(None)
         server_response = self.pop_response(GEARMAN_SERVER_COMMAND_GETPID)
+        assert server_response is None
+
+    def test_cancel_job(self):
+        self.send_server_command(GEARMAN_SERVER_COMMAND_CANCEL_JOB)
+
+        # Pop prematurely
+        with pytest.raises(InvalidAdminClientState):
+            self.pop_response(GEARMAN_SERVER_COMMAND_CANCEL_JOB)
+
+        self.recv_server_response(None)
+        server_response = self.pop_response(GEARMAN_SERVER_COMMAND_CANCEL_JOB)
         assert server_response is None
 
     def test_show_jobs_empty(self):
