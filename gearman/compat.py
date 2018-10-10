@@ -3,18 +3,6 @@ Gearman compatibility module
 """
 
 # Required for python2.4 backward compatibilty
-# Add a module attribute called "all" which is equivalent to "all"
-try:
-    all = all
-except NameError:
-    def all(iterable):
-        """Return True if all elements of the iterable are true (or if the iterable is empty)"""
-        for element in iterable:
-            if not element:
-                return False
-        return True
-
-# Required for python2.4 backward compatibilty
 # Add a class called "defaultdict" which is equivalent to "collections.defaultdict"
 try:
     from collections import defaultdict
