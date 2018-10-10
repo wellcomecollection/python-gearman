@@ -1,15 +1,12 @@
+# -*- encoding: utf-8
+
 import array
 import struct
-import unittest
 
 import pytest
 
 from gearman import compat, protocol
-
-from gearman.connection import GearmanConnection
-from gearman.constants import JOB_PENDING, JOB_CREATED, JOB_FAILED, JOB_COMPLETE
-from gearman.errors import ConnectionError, ServerUnavailable, ProtocolError
-
+from gearman.errors import ProtocolError
 from tests._core_testing import _GearmanAbstractTest
 
 
@@ -224,7 +221,7 @@ class TestProtocolBinaryCommands(object):
 
 
 class TestProtocolTextCommands(object):
-	#######################
+    #######################
     # Begin parsing tests #
     #######################
     def test_parsing_errors(self):
@@ -284,12 +281,6 @@ class TestProtocolTextCommands(object):
 
         packed_command = protocol.pack_text_command(cmd_type, cmd_args)
         assert packed_command == expected_string
-
-
-class GearmanConnectionTest(unittest.TestCase):
-    """Tests the base CommandHandler class that underpins all other CommandHandlerTests"""
-    def test_recv_command(self):
-        pass
 
 
 class GearmanCommandHandlerTest(_GearmanAbstractTest):
