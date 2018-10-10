@@ -67,3 +67,10 @@ except ImportError:
         def __repr__(self):
             return 'defaultdict(%s, %s)' % (self.default_factory,
                                             dict.__repr__(self))
+
+
+def itervalues(d):
+    try:
+        return d.itervalues()
+    except AttributeError:
+        return d.values()
