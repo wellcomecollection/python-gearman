@@ -58,7 +58,7 @@ class ProtocolBinaryCommandsTest(unittest.TestCase):
         grab_job_command_buffer = struct.pack('!4sII', protocol.MAGIC_REQ_STRING, protocol.GEARMAN_COMMAND_GRAB_JOB_UNIQ, 0)
         grab_job_command_buffer = array.array("c", grab_job_command_buffer)
         cmd_type, cmd_args, cmd_len = protocol.parse_binary_command(grab_job_command_buffer, is_response=False)
-        self.assertEquals(cmd_type, protocol.GEARMAN_COMMAND_GRAB_JOB_UNIQ)
+        assert cmd_type == protocol.GEARMAN_COMMAND_GRAB_JOB_UNIQ
         self.assertEquals(cmd_args, dict())
         self.assertEquals(cmd_len, len(grab_job_command_buffer))
 
@@ -69,7 +69,7 @@ class ProtocolBinaryCommandsTest(unittest.TestCase):
         cmd_type, cmd_args, cmd_len = protocol.parse_binary_command(not_enough_data_command_buffer)
         assert cmd_type is None
         assert cmd_args is None
-        self.assertEquals(cmd_len, 0)
+        assert cmd_len == 0
 
         # Test that we return with nothing to do... received a partial packet (expected binary payload of size 4, got 0)
         not_enough_data_command_buffer = struct.pack('!4sII', protocol.MAGIC_RES_STRING, protocol.GEARMAN_COMMAND_ECHO_RES, 4)
@@ -77,13 +77,13 @@ class ProtocolBinaryCommandsTest(unittest.TestCase):
         cmd_type, cmd_args, cmd_len = protocol.parse_binary_command(not_enough_data_command_buffer)
         assert cmd_type is None
         assert cmd_args is None
-        self.assertEquals(cmd_len, 0)
+        assert cmd_len == 0
 
     def test_parsing_no_args(self):
         noop_command_buffer = struct.pack('!4sII', protocol.MAGIC_RES_STRING, protocol.GEARMAN_COMMAND_NOOP, 0)
         noop_command_buffer = array.array("c", noop_command_buffer)
         cmd_type, cmd_args, cmd_len = protocol.parse_binary_command(noop_command_buffer)
-        self.assertEquals(cmd_type, protocol.GEARMAN_COMMAND_NOOP)
+        assert cmd_type == protocol.GEARMAN_COMMAND_NOOP
         self.assertEquals(cmd_args, dict())
         self.assertEquals(cmd_len, len(noop_command_buffer))
 
@@ -92,7 +92,7 @@ class ProtocolBinaryCommandsTest(unittest.TestCase):
         echo_command_buffer = struct.pack('!4sII4s', protocol.MAGIC_RES_STRING, protocol.GEARMAN_COMMAND_ECHO_RES, 4, echoed_string)
         echo_command_buffer = array.array("c", echo_command_buffer)
         cmd_type, cmd_args, cmd_len = protocol.parse_binary_command(echo_command_buffer)
-        self.assertEquals(cmd_type, protocol.GEARMAN_COMMAND_ECHO_RES)
+        assert cmd_type == protocol.GEARMAN_COMMAND_ECHO_RES
         self.assertEquals(cmd_args, dict(data=echoed_string))
         self.assertEquals(cmd_len, len(echo_command_buffer))
 
@@ -104,7 +104,7 @@ class ProtocolBinaryCommandsTest(unittest.TestCase):
         excess_echo_command_buffer = array.array("c", excess_echo_command_buffer)
 
         cmd_type, cmd_args, cmd_len = protocol.parse_binary_command(excess_echo_command_buffer)
-        self.assertEquals(cmd_type, protocol.GEARMAN_COMMAND_ECHO_RES)
+        assert cmd_type == protocol.GEARMAN_COMMAND_ECHO_RES
         self.assertEquals(cmd_args, dict(data=echoed_string))
         self.assertEquals(cmd_len, len(excess_echo_command_buffer) - excess_bytes)
 
@@ -117,7 +117,7 @@ class ProtocolBinaryCommandsTest(unittest.TestCase):
         uniq_command_buffer = struct.pack('!4sII%ds' % payload_size, protocol.MAGIC_RES_STRING, protocol.GEARMAN_COMMAND_JOB_ASSIGN_UNIQ, payload_size, binary_payload)
         uniq_command_buffer = array.array("c", uniq_command_buffer)
         cmd_type, cmd_args, cmd_len = protocol.parse_binary_command(uniq_command_buffer)
-        self.assertEquals(cmd_type, protocol.GEARMAN_COMMAND_JOB_ASSIGN_UNIQ)
+        assert cmd_type == protocol.GEARMAN_COMMAND_JOB_ASSIGN_UNIQ
         self.assertEquals(cmd_args, dict(job_handle='test', task='function', unique='identifier', data=expected_data))
         self.assertEquals(cmd_len, len(uniq_command_buffer))
 
@@ -230,12 +230,12 @@ class ProtocolTextCommandsTest(unittest.TestCase):
         cmd_type, cmd_response, cmd_len = protocol.parse_text_command(received_data)
         assert cmd_type is None
         assert cmd_response is None
-        self.assertEquals(cmd_len, 0)
+        assert cmd_len == 0
 
     def test_parsing_single_line(self):
         received_data = array.array("c", "Hello there\n")
         cmd_type, cmd_response, cmd_len = protocol.parse_text_command(received_data)
-        self.assertEquals(cmd_type, protocol.GEARMAN_COMMAND_TEXT_COMMAND)
+        assert cmd_type == protocol.GEARMAN_COMMAND_TEXT_COMMAND
         self.assertEquals(cmd_response, dict(raw_text=received_data.tostring().strip()))
         self.assertEquals(cmd_len, len(received_data))
 
@@ -245,7 +245,7 @@ class ProtocolTextCommandsTest(unittest.TestCase):
         received_data = sentence_one + sentence_two
 
         cmd_type, cmd_response, cmd_len = protocol.parse_text_command(received_data)
-        self.assertEquals(cmd_type, protocol.GEARMAN_COMMAND_TEXT_COMMAND)
+        assert cmd_type == protocol.GEARMAN_COMMAND_TEXT_COMMAND
         self.assertEquals(cmd_response, dict(raw_text=sentence_one.tostring().strip()))
         self.assertEquals(cmd_len, len(sentence_one))
 
@@ -302,12 +302,12 @@ class GearmanCommandHandlerTest(_GearmanAbstractTest):
     def assert_recv_command(self, expected_cmd_type, **expected_cmd_args):
         cmd_type, cmd_args = self.command_handler.recv_command_queue.popleft()
         self.assert_commands_equal(cmd_type, expected_cmd_type)
-        self.assertEqual(cmd_args, expected_cmd_args)
+        assert cmd_args == expected_cmd_args
 
     def assert_sent_command(self, expected_cmd_type, **expected_cmd_args):
         # All commands should be sent via the CommandHandler
         handler_cmd_type, handler_cmd_args = self.command_handler.sent_command_queue.popleft()
         self.assert_commands_equal(handler_cmd_type, expected_cmd_type)
-        self.assertEqual(handler_cmd_args, expected_cmd_args)
+        assert handler_cmd_args == expected_cmd_args
 
         super(GearmanCommandHandlerTest, self).assert_sent_command(expected_cmd_type, **expected_cmd_args)

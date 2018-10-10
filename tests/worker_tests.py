@@ -82,14 +82,14 @@ class WorkerTest(_GearmanAbstractWorkerTest):
         new_client_id = 'HELLO'
 
         # Make sure nothing is set
-        self.assertEqual(self.connection_manager.worker_client_id, None)
-        self.assertEqual(self.command_handler._client_id, None)
+        assert self.connection_manager.worker_client_id is None
+        assert self.command_handler._client_id is None
 
         self.connection_manager.set_client_id(new_client_id)
 
         # Make sure both the client and the connection handler reflect the new state
-        self.assertEqual(self.connection_manager.worker_client_id, new_client_id)
-        self.assertEqual(self.command_handler._client_id, new_client_id)
+        assert self.connection_manager.worker_client_id == new_client_id
+        assert self.command_handler._client_id == new_client_id
 
     def test_establish_worker_connections(self):
         self.connection_manager.connection_list = []
@@ -282,7 +282,7 @@ class WorkerCommandHandlerStateMachineTest(_GearmanAbstractWorkerTest):
         other_handler.recv_command(GEARMAN_COMMAND_NOOP)
 
         # Make sure other handler has a lock
-        self.assertEqual(self.connection_manager.command_handler_holding_job_lock, other_handler)
+        assert self.connection_manager.command_handler_holding_job_lock == other_handler
 
         # Make sure OUR handler has nothing incoming
         self.assert_no_pending_commands()
@@ -292,7 +292,7 @@ class WorkerCommandHandlerStateMachineTest(_GearmanAbstractWorkerTest):
         self.assert_sent_command(GEARMAN_COMMAND_PRE_SLEEP)
 
         # Make sure other handler still has lock
-        self.assertEqual(self.connection_manager.command_handler_holding_job_lock, other_handler)
+        assert self.connection_manager.command_handler_holding_job_lock == other_handler
 
         # Make the other handler release its lock
         other_handler.recv_command(GEARMAN_COMMAND_NO_JOB)
@@ -358,4 +358,4 @@ class WorkerCommandHandlerStateMachineTest(_GearmanAbstractWorkerTest):
 
     def assert_job_lock(self, is_locked):
         expected_value = (is_locked and self.command_handler) or None
-        self.assertEqual(self.connection_manager.command_handler_holding_job_lock, expected_value)
+        assert self.connection_manager.command_handler_holding_job_lock == expected_value
