@@ -3,9 +3,9 @@ from gearman.constants import PRIORITY_NONE, PRIORITY_LOW, PRIORITY_HIGH
 from gearman.errors import ProtocolError
 
 # Protocol specific constants
-NULL_CHAR = '\x00'
-MAGIC_RES_STRING = '%sRES' % NULL_CHAR
-MAGIC_REQ_STRING = '%sREQ' % NULL_CHAR
+NULL_CHAR = b'\x00'
+MAGIC_RES_STRING = b'%sRES' % NULL_CHAR
+MAGIC_REQ_STRING = b'%sREQ' % NULL_CHAR
 
 COMMAND_HEADER_SIZE = 12
 
