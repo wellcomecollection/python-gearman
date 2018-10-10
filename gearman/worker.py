@@ -43,7 +43,7 @@ class GearmanWorker(GearmanConnectionManager):
         self.worker_abilities[task] = callback_function
         self._update_initial_state()
 
-        for command_handler in self.handler_to_connection_map.iterkeys():
+        for command_handler in self.handler_to_connection_map:
             command_handler.set_abilities(self.handler_initial_state['abilities'])
 
         return task
