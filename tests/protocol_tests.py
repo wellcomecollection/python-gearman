@@ -60,7 +60,7 @@ class TestProtocolBinaryCommands(object):
     def test_parsing_request(self):
         # Test parsing a request for a job (server side parsing)
         grab_job_command_buffer = struct.pack('!4sII', protocol.MAGIC_REQ_STRING, protocol.GEARMAN_COMMAND_GRAB_JOB_UNIQ, 0)
-        grab_job_command_buffer = array.array("c", grab_job_command_buffer)
+        grab_job_command_buffer = array.array("b", grab_job_command_buffer)
         cmd_type, cmd_args, cmd_len = protocol.parse_binary_command(grab_job_command_buffer, is_response=False)
         assert cmd_type == protocol.GEARMAN_COMMAND_GRAB_JOB_UNIQ
         assert cmd_args == {}
@@ -69,7 +69,7 @@ class TestProtocolBinaryCommands(object):
     def test_parsing_without_enough_data(self):
         # Test that we return with nothing to do... received a partial packet
         not_enough_data_command_buffer = struct.pack('!4s', protocol.MAGIC_RES_STRING)
-        not_enough_data_command_buffer = array.array("c", not_enough_data_command_buffer)
+        not_enough_data_command_buffer = array.array("b", not_enough_data_command_buffer)
         cmd_type, cmd_args, cmd_len = protocol.parse_binary_command(not_enough_data_command_buffer)
         assert cmd_type is None
         assert cmd_args is None
@@ -77,7 +77,7 @@ class TestProtocolBinaryCommands(object):
 
         # Test that we return with nothing to do... received a partial packet (expected binary payload of size 4, got 0)
         not_enough_data_command_buffer = struct.pack('!4sII', protocol.MAGIC_RES_STRING, protocol.GEARMAN_COMMAND_ECHO_RES, 4)
-        not_enough_data_command_buffer = array.array("c", not_enough_data_command_buffer)
+        not_enough_data_command_buffer = array.array("b", not_enough_data_command_buffer)
         cmd_type, cmd_args, cmd_len = protocol.parse_binary_command(not_enough_data_command_buffer)
         assert cmd_type is None
         assert cmd_args is None
@@ -85,7 +85,7 @@ class TestProtocolBinaryCommands(object):
 
     def test_parsing_no_args(self):
         noop_command_buffer = struct.pack('!4sII', protocol.MAGIC_RES_STRING, protocol.GEARMAN_COMMAND_NOOP, 0)
-        noop_command_buffer = array.array("c", noop_command_buffer)
+        noop_command_buffer = array.array("b", noop_command_buffer)
         cmd_type, cmd_args, cmd_len = protocol.parse_binary_command(noop_command_buffer)
         assert cmd_type == protocol.GEARMAN_COMMAND_NOOP
         assert cmd_args == dict()
@@ -94,7 +94,7 @@ class TestProtocolBinaryCommands(object):
     def test_parsing_single_arg(self):
         echoed_string = b'abcd'
         echo_command_buffer = struct.pack('!4sII4s', protocol.MAGIC_RES_STRING, protocol.GEARMAN_COMMAND_ECHO_RES, 4, echoed_string)
-        echo_command_buffer = array.array("c", echo_command_buffer)
+        echo_command_buffer = array.array("b", echo_command_buffer)
         cmd_type, cmd_args, cmd_len = protocol.parse_binary_command(echo_command_buffer)
         assert cmd_type == protocol.GEARMAN_COMMAND_ECHO_RES
         assert cmd_args == {u"data": echoed_string}
@@ -105,7 +105,7 @@ class TestProtocolBinaryCommands(object):
         excess_bytes = 5
         excess_data = echoed_string + (protocol.NULL_CHAR * excess_bytes)
         excess_echo_command_buffer = struct.pack('!4sII9s', protocol.MAGIC_RES_STRING, protocol.GEARMAN_COMMAND_ECHO_RES, 4, excess_data)
-        excess_echo_command_buffer = array.array("c", excess_echo_command_buffer)
+        excess_echo_command_buffer = array.array("b", excess_echo_command_buffer)
 
         cmd_type, cmd_args, cmd_len = protocol.parse_binary_command(excess_echo_command_buffer)
         assert cmd_type == protocol.GEARMAN_COMMAND_ECHO_RES
@@ -118,13 +118,7 @@ class TestProtocolBinaryCommands(object):
         binary_payload = protocol.NULL_CHAR.join([b'test', b'function', b'identifier', expected_data])
         payload_size = len(binary_payload)
 
-        uniq_command_buffer = struct.pack(
-            '!4sII%ds' % payload_size,
-            protocol.MAGIC_RES_STRING,
-            protocol.GEARMAN_COMMAND_JOB_ASSIGN_UNIQ,
-            payload_size,
-            binary_payload
-        )
+        uniq_command_buffer = struct.pack('!4sII%ds' % payload_size, protocol.MAGIC_RES_STRING, protocol.GEARMAN_COMMAND_JOB_ASSIGN_UNIQ, payload_size, binary_payload)
         uniq_command_buffer = array.array("b", uniq_command_buffer)
         cmd_type, cmd_args, cmd_len = protocol.parse_binary_command(uniq_command_buffer)
         assert cmd_type == protocol.GEARMAN_COMMAND_JOB_ASSIGN_UNIQ
