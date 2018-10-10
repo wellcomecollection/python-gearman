@@ -252,7 +252,7 @@ class ClientTest(_GearmanAbstractTest):
 
         job_request = self.connection_manager.get_job_status(single_request)
         request_status = job_request.status
-        self.failUnless(request_status)
+        assert request_status
         self.assertTrue(request_status['known'])
         self.assertFalse(request_status['running'])
         self.assertEqual(request_status['numerator'], 0)
@@ -272,7 +272,7 @@ class ClientTest(_GearmanAbstractTest):
 
         job_request = self.connection_manager.get_job_status(single_request)
         request_status = job_request.status
-        self.failUnless(request_status)
+        assert request_status
         self.assertFalse(request_status['known'])
         self.assertFalse(request_status['running'])
         self.assertEqual(request_status['numerator'], 0)
