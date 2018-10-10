@@ -19,15 +19,36 @@ from tests._core_testing import _GearmanAbstractTest, MockGearmanConnectionManag
 class MockGearmanAdminClient(GearmanAdminClient, MockGearmanConnectionManager):
     pass
 
-class CommandHandlerStateMachineTest(_GearmanAbstractTest):
-    """Test the public interface a GearmanWorker may need to call in order to update state on a GearmanWorkerCommandHandler"""
+
+class _StateMachineTest(_GearmanAbstractTest):
+
     connection_manager_class = MockGearmanAdminClient
-    command_handler_class = GearmanAdminClientCommandHandler
 
     def setUp(self):
-        super(CommandHandlerStateMachineTest, self).setUp()
+        super(_StateMachineTest, self).setUp()
         self.connection_manager.current_connection = self.connection
         self.connection_manager.current_handler = self.command_handler
+
+    def send_server_command(self, expected_command):
+        self.command_handler.send_text_command(expected_command)
+        expected_line = "%s\n" % expected_command
+        self.assert_sent_command(GEARMAN_COMMAND_TEXT_COMMAND, raw_text=expected_line)
+
+        assert self.command_handler._sent_commands[0] == expected_command
+
+    def recv_server_response(self, response_line):
+        self.command_handler.recv_command(GEARMAN_COMMAND_TEXT_COMMAND, raw_text=response_line)
+
+    def pop_response(self, expected_command):
+        server_cmd, server_response = self.command_handler.pop_response()
+        assert expected_command == server_cmd
+
+        return server_response
+
+
+class CommandHandlerStateMachineTest(_StateMachineTest):
+    """Test the public interface a GearmanWorker may need to call in order to update state on a GearmanWorkerCommandHandler"""
+    command_handler_class = GearmanAdminClientCommandHandler
 
     def test_send_illegal_server_commands(self):
         with pytest.raises(ProtocolError):
@@ -208,18 +229,19 @@ class CommandHandlerStateMachineTest(_GearmanAbstractTest):
         with pytest.raises(InvalidAdminClientState, match='Received an unexpected server response'):
             self.recv_server_response(b'123')
 
-    def send_server_command(self, expected_command):
-        self.command_handler.send_text_command(expected_command)
-        expected_line = "%s\n" % expected_command
-        self.assert_sent_command(GEARMAN_COMMAND_TEXT_COMMAND, raw_text=expected_line)
 
-        assert self.command_handler._sent_commands[0] == expected_command
+class BrokenCommandHandler(GearmanAdminClientCommandHandler):
+    recv_server_show_jobs = None
 
-    def recv_server_response(self, response_line):
-        self.command_handler.recv_command(GEARMAN_COMMAND_TEXT_COMMAND, raw_text=response_line)
 
-    def pop_response(self, expected_command):
-        server_cmd, server_response = self.command_handler.pop_response()
-        assert expected_command == server_cmd
+class TestBrokenCommandHandlerStateMachine(_StateMachineTest):
+    """
+    This exists to hit a line that isn't reachable in normal operation.
+    """
+    command_handler_class = BrokenCommandHandler
 
-        return server_response
+    def test_show_jobs_empty(self):
+        self.send_server_command(GEARMAN_SERVER_COMMAND_SHOW_JOBS)
+
+        with pytest.raises(ValueError, match="Could not handle command: 'show_jobs'"):
+            self.recv_server_response('.')

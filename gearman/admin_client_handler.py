@@ -87,7 +87,7 @@ class GearmanAdminClientCommandHandler(GearmanCommandHandler):
         cmd_type = cmd.replace(" ", "_")
         recv_server_command_function_name = 'recv_server_%s' % cmd_type
 
-        cmd_callback = getattr(self, recv_server_command_function_name, None)
+        cmd_callback = getattr(self, recv_server_command_function_name)
         if not cmd_callback:
             gearman_logger.error('Could not handle command: %r - %r' % (cmd_type, raw_text))
             raise ValueError('Could not handle command: %r - %r' % (cmd_type, raw_text))
