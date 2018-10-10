@@ -76,6 +76,10 @@ class GearmanConnectionManager(object):
 
         self.handler_initial_state = {}
 
+    def __repr__(self):
+        return '<%s connection_list=%r>' % (
+            type(self).__name__, self.connection_list)
+
     def shutdown(self):
         # Shutdown all our connections one by one
         for gearman_connection in self.connection_list:

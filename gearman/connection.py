@@ -45,6 +45,16 @@ class GearmanConnection(object):
 
         self._reset_connection()
 
+    def __repr__(self):
+        return '%s(host=%r, port=%r, keyfile=%r, certfile=%r, ca_certs=%r)' % (
+            type(self).__name__,
+            self.gearman_host,
+            self.gearman_port,
+            self.keyfile,
+            self.certfile,
+            self.ca_certs
+        )
+
     def _reset_connection(self):
         """Reset the state of this connection"""
         self.connected = False
@@ -292,7 +302,3 @@ class GearmanConnection(object):
 
         rewritten_message = "<%s:%d> %s" % (self.gearman_host, self.gearman_port, message)
         raise ConnectionError(rewritten_message)
-
-    def __repr__(self):
-        return ('<GearmanConnection %s:%d connected=%s>' %
-            (self.gearman_host, self.gearman_port, self.connected))

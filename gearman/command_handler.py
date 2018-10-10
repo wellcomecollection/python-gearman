@@ -12,6 +12,10 @@ class GearmanCommandHandler(object):
     def __init__(self, connection_manager=None):
         self.connection_manager = connection_manager
 
+    def __repr__(self):
+        return '%s(connection_manager=%r)' % (
+            type(self).__name__, self.connection_manager)
+
     def initial_state(self, *largs, **kwargs):
         """Called by a Connection Manager after we've been instantiated and we're ready to send off commands"""
         pass

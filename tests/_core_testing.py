@@ -50,9 +50,6 @@ class MockGearmanConnection(GearmanConnection):
         # 73 is the best number, so why not?
         return 73
 
-    def __repr__(self):
-        return ('<GearmanConnection %s:%d connected=%s> (%s)' %
-            (self.gearman_host, self.gearman_port, self.connected, id(self)))
 
 class MockGearmanConnectionManager(GearmanConnectionManager):
     """Handy mock client base to test Worker/Client/Abstract ClientBases"""
