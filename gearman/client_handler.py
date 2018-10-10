@@ -1,8 +1,11 @@
+# -*- encoding: utf-8
+
 import collections
 import time
 import logging
 import weakref
 
+from . import compat
 from gearman.command_handler import GearmanCommandHandler
 from gearman.constants import JOB_UNKNOWN, JOB_PENDING, JOB_CREATED, JOB_FAILED, JOB_COMPLETE
 from gearman.errors import InvalidClientState
@@ -48,7 +51,7 @@ class GearmanClientCommandHandler(GearmanCommandHandler):
         for pending_request in self.requests_awaiting_handles:
             pending_request.state = JOB_UNKNOWN
 
-        for inflight_request in self.handle_to_request_map.itervalues():
+        for inflight_request in compat.itervalues(self.handle_to_request_map):
             inflight_request.state = JOB_UNKNOWN
 
     def _register_request(self, current_request):

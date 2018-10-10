@@ -8,6 +8,7 @@ import weakref
 
 import gearman.util
 
+from . import compat
 from gearman.connection_manager import GearmanConnectionManager
 from gearman.client_handler import GearmanClientCommandHandler
 from gearman.constants import PRIORITY_NONE, PRIORITY_LOW, PRIORITY_HIGH, JOB_UNKNOWN, JOB_PENDING
@@ -190,7 +191,7 @@ class GearmanClient(GearmanConnectionManager):
         # Make sure we have a unique identifier for ALL our tasks
         job_unique = job_info.get('unique')
         if not job_unique:
-            job_unique = os.urandom(self.random_unique_bytes).encode('hex')
+            job_unique = compat.to_hex(os.urandom(self.random_unique_bytes))
 
         current_job = self.job_class(connection=None, handle=None, task=job_info['task'], unique=job_unique, data=job_info['data'])
 

@@ -15,6 +15,9 @@ if PY3:
     def itervalues(d):
         return d.values()
 
+    def to_hex(binary_str):
+        return binary_str.hex()
+
 else:
     binary_type = str
 
@@ -23,3 +26,6 @@ else:
 
     def itervalues(d):
         return d.itervalues()
+
+    def to_hex(binary_str):
+        return binary_str.encode('hex')
