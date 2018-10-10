@@ -12,6 +12,7 @@ from gearman.connection_manager import GearmanConnectionManager
 from gearman.client_handler import GearmanClientCommandHandler
 from gearman.constants import PRIORITY_NONE, PRIORITY_LOW, PRIORITY_HIGH, JOB_UNKNOWN, JOB_PENDING
 from gearman.errors import ConnectionError, ExceededConnectionAttempts, ServerUnavailable
+from gearman.job import GearmanJobRequest
 
 gearman_logger = logging.getLogger(__name__)
 
@@ -189,8 +190,12 @@ class GearmanClient(GearmanConnectionManager):
         initial_priority = job_info.get('priority', PRIORITY_NONE)
 
         max_attempts = max_retries + 1
-        current_request = self.job_request_class(current_job, initial_priority=initial_priority, background=background, max_attempts=max_attempts)
-        return current_request
+        return GearmanJobRequest(
+            current_job,
+            initial_priority=initial_priority,
+            background=background,
+            max_attempts=max_attempts
+        )
 
     def establish_request_connection(self, current_request):
         """Return a live connection for the given hash"""

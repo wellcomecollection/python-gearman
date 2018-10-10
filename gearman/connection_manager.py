@@ -48,7 +48,6 @@ class GearmanConnectionManager(object):
     connection_class = GearmanConnection
 
     job_class = GearmanJob
-    job_request_class = GearmanJobRequest
 
     data_encoder = NoopEncoder
 
