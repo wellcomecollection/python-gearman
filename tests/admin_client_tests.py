@@ -48,6 +48,15 @@ class CommandHandlerStateMachineTest(_GearmanAbstractTest):
         server_response = self.pop_response(GEARMAN_SERVER_COMMAND_STATUS)
         assert server_response == ()
 
+    def test_response_ready(self):
+        self.send_server_command(GEARMAN_SERVER_COMMAND_STATUS)
+
+        # We aren't ready until we see the '.'
+        assert not self.command_handler.response_ready
+
+        self.recv_server_response(".")
+        assert self.command_handler.response_ready
+
     def test_multiple_status(self):
         self.send_server_command(GEARMAN_SERVER_COMMAND_STATUS)
         self.recv_server_response('\t'.join(['test_function', '1', '5', '17']))
