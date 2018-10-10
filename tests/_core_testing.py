@@ -1,7 +1,11 @@
+# -*- encoding: utf-8
+
 import collections
 import random
+import string
 import unittest
 
+from gearman import compat
 import gearman.util
 from gearman.command_handler import GearmanCommandHandler
 from gearman.connection import GearmanConnection
@@ -11,6 +15,15 @@ from gearman.constants import PRIORITY_NONE, PRIORITY_HIGH, PRIORITY_LOW, DEFAUL
 from gearman.errors import ConnectionError
 from gearman.job import GearmanJob, GearmanJobRequest
 from gearman.protocol import get_command_name
+
+
+def random_bytes():
+    s = str(random.random())
+    if isinstance(s, compat.binary_type):
+        return s
+    else:
+        return s.encode('ascii')
+
 
 class MockGearmanConnection(GearmanConnection):
     def __init__(self, host=None, port=DEFAULT_GEARMAN_PORT):
@@ -77,7 +90,13 @@ class _GearmanAbstractTest(unittest.TestCase):
         self.command_handler = self.connection_manager.connection_to_handler_map[self.connection]
 
     def generate_job(self):
-        return self.job_class(self.connection, handle=str(random.random()), task='__test_ability__', unique=str(random.random()), data=str(random.random()))
+        return self.job_class(
+            self.connection,
+            handle=random_bytes(),
+            task=b'__test_ability__',
+            unique=random_bytes(),
+            data=random_bytes()
+        )
 
     def generate_job_dict(self):
         current_job = self.generate_job()
@@ -85,7 +104,13 @@ class _GearmanAbstractTest(unittest.TestCase):
 
     def generate_job_request(self, priority=PRIORITY_NONE, background=False):
         job_handle = str(random.random())
-        current_job = self.job_class(connection=self.connection, handle=job_handle, task='__test_ability__', unique=str(random.random()), data=str(random.random()))
+        current_job = self.job_class(
+            connection=self.connection,
+            handle=job_handle,
+            task=b'__test_ability__',
+            unique=random_bytes(),
+            data=random_bytes()
+        )
         current_request = GearmanJobRequest(
             current_job,
             initial_priority=priority,

@@ -32,7 +32,6 @@ class GearmanWorkerCommandHandler(GearmanCommandHandler):
     ##### Public interface methods to be called by GearmanWorker #####
     ##################################################################
     def set_abilities(self, connection_abilities_list):
-        assert type(connection_abilities_list) in (list, tuple)
         self._handler_abilities = connection_abilities_list
 
         self.send_command(GEARMAN_COMMAND_RESET_ABILITIES)
@@ -54,11 +53,11 @@ class GearmanWorkerCommandHandler(GearmanCommandHandler):
         self.send_command(GEARMAN_COMMAND_WORK_STATUS, job_handle=current_job.handle, numerator=str(numerator), denominator=str(denominator))
 
     def send_job_complete(self, current_job, data):
-        """Removes a job from the queue if its backgrounded"""
+        """Removes a job from the queue if it's backgrounded"""
         self.send_command(GEARMAN_COMMAND_WORK_COMPLETE, job_handle=current_job.handle, data=self.encode_data(data))
 
     def send_job_failure(self, current_job):
-        """Removes a job from the queue if its backgrounded"""
+        """Removes a job from the queue if it's backgrounded"""
         self.send_command(GEARMAN_COMMAND_WORK_FAIL, job_handle=current_job.handle)
 
     def send_job_exception(self, current_job, data):
