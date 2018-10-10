@@ -4,7 +4,7 @@ import unittest
 
 import pytest
 
-from gearman import protocol
+from gearman import compat, protocol
 
 from gearman.connection import GearmanConnection
 from gearman.constants import JOB_PENDING, JOB_CREATED, JOB_FAILED, JOB_COMPLETE
@@ -222,16 +222,18 @@ class TestProtocolBinaryCommands(object):
         packed_command_buffer = protocol.pack_binary_command(cmd_type, cmd_args)
         assert packed_command_buffer == expected_command_buffer
 
-class ProtocolTextCommandsTest(unittest.TestCase):
+
+class TestProtocolTextCommands(object):
 	#######################
     # Begin parsing tests #
     #######################
     def test_parsing_errors(self):
-        received_data = array.array("c", "Hello\x00there\n")
-        self.assertRaises(ProtocolError, protocol.parse_text_command, received_data)
+        received_data = array.array("c", b"Hello\x00there\n")
+        with pytest.raises(ProtocolError):
+            protocol.parse_text_command(received_data)
 
     def test_parsing_without_enough_data(self):
-        received_data = array.array("c", "Hello there")
+        received_data = array.array("b", b"Hello there")
         cmd_type, cmd_response, cmd_len = protocol.parse_text_command(received_data)
         assert cmd_type is None
         assert cmd_response is None
@@ -241,7 +243,9 @@ class ProtocolTextCommandsTest(unittest.TestCase):
         received_data = array.array("c", "Hello there\n")
         cmd_type, cmd_response, cmd_len = protocol.parse_text_command(received_data)
         assert cmd_type == protocol.GEARMAN_COMMAND_TEXT_COMMAND
-        self.assertEquals(cmd_response, dict(raw_text=received_data.tostring().strip()))
+        assert cmd_response == {
+            u"raw_text": compat.array_to_bytes(received_data).strip()
+        }
         assert cmd_len == len(received_data)
 
     def test_parsing_multi_line(self):
@@ -251,24 +255,24 @@ class ProtocolTextCommandsTest(unittest.TestCase):
 
         cmd_type, cmd_response, cmd_len = protocol.parse_text_command(received_data)
         assert cmd_type == protocol.GEARMAN_COMMAND_TEXT_COMMAND
-        self.assertEquals(cmd_response, dict(raw_text=sentence_one.tostring().strip()))
+        assert cmd_response == {
+            u"raw_text": compat.array_to_bytes(sentence_one).strip()
+        }
         assert cmd_len == len(sentence_one)
 
-    def test_packing_errors(self):
+    @pytest.mark.parametrize('cmd_type,cmd_args', [
         # Test bad command type
-        cmd_type = protocol.GEARMAN_COMMAND_NOOP
-        cmd_args = dict()
-        self.assertRaises(ProtocolError, protocol.pack_text_command, cmd_type, cmd_args)
+        (protocol.GEARMAN_COMMAND_NOOP, {}),
 
         # Test missing args
-        cmd_type = protocol.GEARMAN_COMMAND_TEXT_COMMAND
-        cmd_args = dict()
-        self.assertRaises(ProtocolError, protocol.pack_text_command, cmd_type, cmd_args)
+        (protocol.GEARMAN_COMMAND_TEXT_COMMAND, {}),
 
         # Test misnamed parameter dict
-        cmd_type = protocol.GEARMAN_COMMAND_TEXT_COMMAND
-        cmd_args = dict(bad_text='abcdefghij')
-        self.assertRaises(ProtocolError, protocol.pack_text_command, cmd_type, cmd_args)
+        (protocol.GEARMAN_COMMAND_TEXT_COMMAND, {u"bad_text": u"abcdefghij"}),
+    ])
+    def test_packing_errors(self, cmd_type, cmd_args):
+        with pytest.raises(ProtocolError):
+            protocol.pack_text_command(cmd_type=cmd_type, cmd_args=cmd_args)
 
     #######################
     # Begin packing tests #
@@ -276,15 +280,17 @@ class ProtocolTextCommandsTest(unittest.TestCase):
     def test_packing_single_line(self):
         expected_string = 'Hello world'
         cmd_type = protocol.GEARMAN_COMMAND_TEXT_COMMAND
-        cmd_args = dict(raw_text=expected_string)
+        cmd_args = {u"raw_text": expected_string}
 
         packed_command = protocol.pack_text_command(cmd_type, cmd_args)
         assert packed_command == expected_string
+
 
 class GearmanConnectionTest(unittest.TestCase):
     """Tests the base CommandHandler class that underpins all other CommandHandlerTests"""
     def test_recv_command(self):
         pass
+
 
 class GearmanCommandHandlerTest(_GearmanAbstractTest):
     """Tests the base CommandHandler class that underpins all other CommandHandlerTests"""
