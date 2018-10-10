@@ -2,7 +2,6 @@ import logging
 import random
 import sys
 
-from gearman import compat
 from gearman.connection_manager import GearmanConnectionManager
 from gearman.worker_handler import GearmanWorkerCommandHandler
 from gearman.errors import ConnectionError
@@ -155,7 +154,7 @@ class GearmanWorker(GearmanConnectionManager):
     def wait_until_updates_sent(self, multiple_gearman_jobs, poll_timeout=None):
         connection_set = set([current_job.connection for current_job in multiple_gearman_jobs])
         def continue_while_updates_pending(any_activity):
-            return compat.any(current_connection.writable() for current_connection in connection_set)
+            return any(current_connection.writable() for current_connection in connection_set)
 
         self.poll_connections_until_stopped(connection_set, continue_while_updates_pending, timeout=poll_timeout)
 
@@ -248,10 +247,10 @@ class GearmanWorker(GearmanConnectionManager):
             self.command_handler_holding_job_lock = None
 
         return True
-    
+
     def has_job_lock(self):
         return bool(self.command_handler_holding_job_lock is not None)
-    
+
     def check_job_lock(self, command_handler):
         """Check to see if we hold the job lock"""
         return bool(self.command_handler_holding_job_lock == command_handler)

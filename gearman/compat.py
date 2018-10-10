@@ -3,18 +3,6 @@ Gearman compatibility module
 """
 
 # Required for python2.4 backward compatibilty
-# Add a module attribute called "any" which is equivalent to "any"
-try:
-    any = any
-except NameError:
-    def any(iterable):
-        """Return True if any element of the iterable is true. If the iterable is empty, return False"""
-        for element in iterable:
-            if element:
-                return True
-        return False
-
-# Required for python2.4 backward compatibilty
 # Add a module attribute called "all" which is equivalent to "all"
 try:
     all = all

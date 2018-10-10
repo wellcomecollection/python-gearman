@@ -86,7 +86,7 @@ class GearmanClient(GearmanConnectionManager):
                 if current_request.state == JOB_UNKNOWN:
                     self.send_job_request(current_request)
 
-            return compat.any(is_request_pending(current_request) for current_request in job_requests)
+            return any(is_request_pending(current_request) for current_request in job_requests)
 
         self.poll_connections_until_stopped(self.connection_list, continue_while_jobs_pending, timeout=poll_timeout)
 
