@@ -195,13 +195,15 @@ def parse_binary_command(in_buffer, is_response=True):
     if received_bad_response or received_bad_request:
         raise ProtocolError('Malformed Magic')
 
-    expected_cmd_params = GEARMAN_PARAMS_FOR_COMMAND.get(cmd_type, None)
+    expected_cmd_params = GEARMAN_PARAMS_FOR_COMMAND.get(cmd_type)
 
-    # GEARMAN_COMMAND_TEXT_COMMAND is a faked command that we use to support server text-based commands
-    if expected_cmd_params is None or cmd_type == GEARMAN_COMMAND_TEXT_COMMAND:
+    # GEARMAN_COMMAND_TEXT_COMMAND is a faked command that we use to support
+    # server text-based commands
+    if (expected_cmd_params is None) or (cmd_type == GEARMAN_COMMAND_TEXT_COMMAND):
         raise ProtocolError('Received unknown binary command: %s' % cmd_type)
 
-    # If everything indicates this is a valid command, we should check to see if we have enough stuff to read in our buffer
+    # If everything indicates this is a valid command, we should check to see
+    # if we have enough stuff to read in our buffer
     expected_packet_size = COMMAND_HEADER_SIZE + cmd_len
     if in_buffer_size < expected_packet_size:
         return None, None, 0

@@ -3,6 +3,8 @@
 import array
 import struct
 
+from hypothesis import given
+from hypothesis.strategies import binary
 import pytest
 
 from gearman import compat, protocol
@@ -53,6 +55,13 @@ class TestProtocolBinaryCommands(object):
         unexpected_payload_command_buffer = array.array("b", unexpected_payload_command_buffer)
         with pytest.raises(ProtocolError):
             protocol.parse_binary_command(unexpected_payload_command_buffer)
+
+    @given(binary())
+    def test_parsing_either_succeeds_or_is_protocolerror(self, in_buffer):
+        try:
+            protocol.parse_binary_command(array.array("b", in_buffer))
+        except ProtocolError:
+            pass
 
     def test_parsing_request(self):
         # Test parsing a request for a job (server side parsing)
