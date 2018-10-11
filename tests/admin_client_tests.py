@@ -1,11 +1,13 @@
 # -*- encoding: utf-8
 
+from hypothesis import given
+from hypothesis.strategies import sampled_from, sets
 import pytest
 
 from gearman.admin_client import GearmanAdminClient, ECHO_STRING
 from gearman.admin_client_handler import GearmanAdminClientCommandHandler
-
-from gearman.errors import InvalidAdminClientState, ProtocolError
+from gearman.connection import GearmanConnection
+from gearman.errors import GearmanError, InvalidAdminClientState, ProtocolError
 from gearman.protocol import (
     GEARMAN_COMMAND_ECHO_RES,
     GEARMAN_COMMAND_ECHO_REQ,
@@ -268,6 +270,60 @@ class CommandHandlerStateMachineTest(_StateMachineTest):
     def test_recv_server_response_without_command(self):
         with pytest.raises(InvalidAdminClientState, match='Received an unexpected server response'):
             self.recv_server_response(b'123')
+
+
+def _assert_gearman_connection_equal(conn1, conn2):
+    # There's currently no equality method defined on ``GearmanConnection``,
+    # so separate instances are unequal.
+    #
+    # Adding an equality method has a bunch of other subtle side effects
+    # (e.g. related to hashing), so making this method test-only is safer
+    # until we have better test coverage.
+    #
+    assert isinstance(conn1, GearmanConnection)
+    assert isinstance(conn2, GearmanConnection)
+    assert conn1.gearman_host == conn2.gearman_host
+    assert conn1.gearman_port == conn2.gearman_port
+    assert conn1.keyfile == conn2.keyfile
+    assert conn1.certfile == conn2.certfile
+    assert conn1.ca_certs == conn2.ca_certs
+
+
+class TestGearmanAdminClient(object):
+
+    def test_creating_with_oldstyle_host_port_pair(self):
+        client = GearmanAdminClient(host_list=["localhost:1234"])
+        assert len(client.connection_list) == 1
+
+        _assert_gearman_connection_equal(
+            conn1=GearmanConnection(host="localhost", port=1234),
+            conn2=client.connection_list[0]
+        )
+
+    def test_multiple_hosts_is_error(self):
+        with pytest.raises(GearmanError, match="Only pass a single host"):
+            GearmanAdminClient(host_list=[
+                "localhost:1234",
+                "example.org:5678",
+            ])
+
+    @given(sets(
+        sampled_from(['host', 'port', 'keyfile', 'certfile', 'ca_certs']),
+        min_size=1))
+    def test_passing_incomplete_ssl_data_is_error(self, keys_to_delete):
+        host_config = {
+            "host": "localhost",
+            "port": 5000,
+            "keyfile": "key.txt",
+            "certfile": "cert.txt",
+            "ca_certs": "ca_certs.txt",
+        }
+
+        for key in keys_to_delete:
+            del host_config[key]
+
+        with pytest.raises(GearmanError, match="Incomplete SSL connection definition"):
+            GearmanAdminClient(host_list=[host_config])
 
 
 class TestGearmanAdminClientCommandHandler:

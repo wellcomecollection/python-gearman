@@ -8,7 +8,12 @@ from gearman import util
 
 from gearman.connection_manager import GearmanConnectionManager
 from gearman.admin_client_handler import GearmanAdminClientCommandHandler
-from gearman.errors import ConnectionError, InvalidAdminClientState, ServerUnavailable
+from gearman.errors import (
+    ConnectionError,
+    GearmanError,
+    InvalidAdminClientState,
+    ServerUnavailable
+)
 from gearman.protocol import GEARMAN_COMMAND_ECHO_REQ, \
     GEARMAN_SERVER_COMMAND_STATUS, GEARMAN_SERVER_COMMAND_VERSION, GEARMAN_SERVER_COMMAND_WORKERS, \
     GEARMAN_SERVER_COMMAND_MAXQUEUE, GEARMAN_SERVER_COMMAND_SHUTDOWN, GEARMAN_SERVER_COMMAND_GETPID, \
@@ -33,7 +38,13 @@ class GearmanAdminClient(GearmanConnectionManager):
         super(GearmanAdminClient, self).__init__(host_list=host_list)
         self.poll_timeout = poll_timeout
 
-        self.current_connection = util.unlist(self.connection_list)
+        try:
+            self.current_connection = util.unlist(self.connection_list)
+        except ValueError:
+            raise GearmanError(
+                "Only pass a single host to the constructor of %s" %
+                type(self).__name__)
+
         self.current_handler = None
 
     def establish_admin_connection(self):
