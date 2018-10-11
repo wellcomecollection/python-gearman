@@ -325,6 +325,23 @@ class TestGearmanAdminClient(object):
         with pytest.raises(GearmanError, match="Incomplete SSL connection definition"):
             GearmanAdminClient(host_list=[host_config])
 
+    def test_creating_with_ssl_host(self):
+        host_config = {
+            "host": "localhost",
+            "port": 5000,
+            "keyfile": "key.txt",
+            "certfile": "cert.txt",
+            "ca_certs": "ca_certs.txt",
+        }
+
+        client = GearmanAdminClient(host_list=[host_config])
+        assert len(client.connection_list) == 1
+
+        _assert_gearman_connection_equal(
+            conn1=GearmanConnection(host="localhost", port=5000, keyfile="key.txt", certfile="cert.txt", ca_certs="ca_certs.txt"),
+            conn2=client.connection_list[0]
+        )
+
 
 class TestGearmanAdminClientCommandHandler:
 

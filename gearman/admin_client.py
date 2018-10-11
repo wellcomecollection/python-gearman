@@ -38,6 +38,8 @@ class GearmanAdminClient(GearmanConnectionManager):
         super(GearmanAdminClient, self).__init__(host_list=host_list)
         self.poll_timeout = poll_timeout
 
+        # TODO: We could change the API here so this class only allows
+        # passing a single host, not a list.
         try:
             self.current_connection = util.unlist(self.connection_list)
         except ValueError:
