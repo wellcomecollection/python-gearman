@@ -42,12 +42,12 @@ def disambiguate_server_parameter(hostport_tuple):
         gearman_host, gearman_port = hostport_tuple
     elif ':' in hostport_tuple:
         gearman_host, gearman_possible_port = hostport_tuple.split(':')
-        gearman_port = int(gearman_possible_port)
+        gearman_port = gearman_possible_port
     else:
         gearman_host = hostport_tuple
         gearman_port = DEFAULT_GEARMAN_PORT
 
-    return gearman_host, gearman_port
+    return gearman_host, int(gearman_port)
 
 
 def select(rlist, wlist, xlist, timeout=None):

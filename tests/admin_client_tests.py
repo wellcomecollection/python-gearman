@@ -291,12 +291,23 @@ def _assert_gearman_connection_equal(conn1, conn2):
 
 class TestGearmanAdminClient(object):
 
-    def test_creating_with_oldstyle_host_port_pair(self):
-        client = GearmanAdminClient(host_list=["localhost:1234"])
+    @pytest.mark.parametrize('host_config', [
+        # As a string specifying a port
+        "localhost:4730",
+
+        # If a port isn't specified, we use the default port
+        "localhost",
+
+        # As a tuple (with and without int argument)
+        ("localhost", "4730"),
+        ("localhost", 4730),
+    ])
+    def test_creating_with_host_port_pair_str(self, host_config):
+        client = GearmanAdminClient(host_list=[host_config])
         assert len(client.connection_list) == 1
 
         _assert_gearman_connection_equal(
-            conn1=GearmanConnection(host="localhost", port=1234),
+            conn1=GearmanConnection(host="localhost", port=4730),
             conn2=client.connection_list[0]
         )
 
@@ -324,6 +335,11 @@ class TestGearmanAdminClient(object):
 
         with pytest.raises(GearmanError, match="Incomplete SSL connection definition"):
             GearmanAdminClient(host_list=[host_config])
+
+    @pytest.mark.parametrize('bad_config', [None, 1, object])
+    def test_passing_bad_host_config_is_error(self, bad_config):
+        with pytest.raises(GearmanError, match="Expected str, tuple or dict"):
+            GearmanAdminClient(host_list=[bad_config])
 
     def test_creating_with_ssl_host(self):
         host_config = {

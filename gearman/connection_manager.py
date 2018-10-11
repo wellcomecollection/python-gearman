@@ -64,7 +64,7 @@ class GearmanConnectionManager(object):
         host_list = host_list or []
         for element in host_list:
             # old style host:port pair
-            if isinstance(element, str):
+            if isinstance(element, (str, tuple)):
                 self.add_connection(element)
             elif isinstance(element, dict):
                 if not all(k in element for k in ('host', 'port', 'keyfile', 'certfile', 'ca_certs')):
@@ -72,6 +72,11 @@ class GearmanConnectionManager(object):
                 self.add_ssl_connection(element['host'], element['port'],
                                         element['keyfile'], element['certfile'],
                                         element['ca_certs'])
+            else:
+                raise GearmanError(
+                    "Expected str, tuple or dict; got %r (type %s)" %
+                    (element, type(element))
+                )
 
         self.handler_to_connection_map = {}
         self.connection_to_handler_map = {}
