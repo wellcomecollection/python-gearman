@@ -14,3 +14,4 @@ dist
 build
 *.swo
 .coverage
+deploy_key
