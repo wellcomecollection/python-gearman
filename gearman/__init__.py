@@ -4,7 +4,7 @@ Gearman API - Client, worker, and admin client interfaces
 
 from gearman.admin_client import GearmanAdminClient
 from gearman.client import GearmanClient
-from gearman.version import __version__
+from gearman.version import __version__  # noqa
 from gearman.worker import GearmanWorker
 
 from gearman.connection_manager import DataEncoder
@@ -25,4 +25,6 @@ __all__ = [
     "JOB_FAILED",
     "JOB_COMPLETE",
     "JOB_UNKNOWN",
+
+    "__version__",
 ]

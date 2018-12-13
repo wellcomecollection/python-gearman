@@ -149,7 +149,6 @@ class _Select(object):
                 map(self.error.discard, bad_conns)
                 errors |= set(bad_conns)
 
-
         events = {}
         for conn in readable:
             events[conn.fileno()] = events.get(conn.fileno(), 0) | READ
