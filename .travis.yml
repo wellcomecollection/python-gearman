@@ -9,16 +9,38 @@ cache:
   directories:
     - $HOME/.cache/pip
 
-matrix:
-  include:
-    - python: "2.7"
-    - python: "3.5"
-    - python: "3.6"
+env:
+  global:
+    - "PYPI_USERNAME=wellcomedigitalplatform"
+
+    # This contains the following variables:
+    #  - PYPI_PASSWORD
+    #
+    - secure: "lP/yY4xaxNeepfg0lvxbX+HArkNFxx0JANTrnMmY7LNf90EkM5tM9NAhhR4Y3ACcIKxuoemqx4q46/ExUtbVcJTCh6KVPaZCWxevKUbHLOVS+Rdpd/VWSxnn5zoWCjniw08pRty0rexpLBtJ/hAGavbDHL4Swz2Md/Rlm5+Cn2Do/pOWXutLDN00rcdwufsLw/cYttlamwLn/ifxE55ALpWQc9B4DaFYt6OYPa2FDh4eNzpL3FxOFum6Ckac1Bb/l7RLdvwo+kVToZ069p/mvmw++A+iqVR2mhGi5SV9XBRQ1S6QBq1aKXKa86lDQfXPOY3+uu+t0dSJ64/63WaC4zzLL//rmTQUjUzhi7YrUdvU3TZhRwysfq3VuLa8jOJf6ru7QSW7C8cWpVPvJffiVSDF1mARp3rd2CDOKrvj+pRQ1rsYweF+5H/Oy3rl8QIeZSWD5h38m/jCSre0MqGm19l2/X9DgVsvnenSlkRbeJi9FTE+L/Kur1rTlthOKC/qw+WQ43MRK7BOBBfZeUlPnZm0thXmSWfFfaDfs0sKTIA7ChrHjb6Zd/wWrDsCzLdEi3D4b9z0IMJ2mTMsPyNx2EoZdla3mCU3267voPXDmCBsoo789XeGYAyB+hnY1aZGOwpMc7yG3ewVd1JWrXhbcvqWnLUv12/VsHOnmubrwnw="
 
 install:
   - "pip install --upgrade pip setuptools"
+  - "pip install --upgrade tox"
   - "pip install -r dev_requirements.txt"
+  - "git fetch origin"
+
+jobs:
+  include:
+    - env: "TOXENV=lint"
+    - env: "TOXENV=check_release_file"
+    - env: "TOXENV=py27"
+      python: "2.7"
+    - env: "TOXENV=py35"
+      python: "3.5"
+    - env: "TOXENV=py36"
+      python: "3.6"
+    - env: "TOXENV=deploy"
+      stage: "deploy"
+
+stages:
+  - "test"
+  - name: "deploy"
+    if: "type = push"
 
 script:
-  - "coverage run -m py.test tests/*.py"
-  - "coverage report"
+  - "tox"

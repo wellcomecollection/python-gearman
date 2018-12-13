@@ -179,9 +179,7 @@ class GearmanConnection(object):
                 recv_buffer = self.gearman_socket.recv(bytes_to_read)
             except ssl.SSLError as e:
                 # if we would block, ignore the error
-                if e.errno == ssl.SSL_ERROR_WANT_READ:
-                    continue
-                elif e.errno == ssl.SSL_ERROR_WANT_WRITE:
+                if e.errno in [ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE]:
                     continue
                 else:
                     self.throw_exception(exception=e)

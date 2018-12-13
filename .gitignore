@@ -14,3 +14,6 @@ dist
 build
 *.swo
 .coverage
+deploy_key
+.tox
+*.egg-info
