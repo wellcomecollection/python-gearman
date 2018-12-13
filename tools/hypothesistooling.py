@@ -135,7 +135,7 @@ def create_tag_and_push():
     git('config', 'core.sshCommand', 'ssh -i deploy_key')
     git(
         'remote', 'add', 'ssh-origin',
-        'git@github.com:wellcometrust/aws_utils.git'
+        'git@github.com:wellcometrust/python-gearman.git'
     )
     git('tag', __version__)
 
