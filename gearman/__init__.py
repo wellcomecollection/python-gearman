@@ -2,10 +2,9 @@
 Gearman API - Client, worker, and admin client interfaces
 """
 
-__version__ = '2.0.2'
-
 from gearman.admin_client import GearmanAdminClient
 from gearman.client import GearmanClient
+from gearman.version import __version__
 from gearman.worker import GearmanWorker
 
 from gearman.connection_manager import DataEncoder
