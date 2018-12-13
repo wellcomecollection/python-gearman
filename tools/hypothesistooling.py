@@ -98,7 +98,7 @@ def is_ancestor(a, b):
     return check == 0
 
 
-CHANGELOG_FILE = os.path.join(ROOT, 'docs', 'changes.rst')
+CHANGELOG_FILE = os.path.join(ROOT, 'changes.rst')
 
 
 def changelog():
