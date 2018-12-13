@@ -50,8 +50,6 @@ __version_info__ = None
 
 VERSION_FILE = os.path.join(ROOT, 'gearman/version.py')
 
-DOCS_CONF_FILE = os.path.join(ROOT, 'docs/conf.py')
-
 with open(VERSION_FILE) as o:
     exec(o.read())
 
@@ -238,17 +236,16 @@ def update_changelog_and_version():
     __version_info__ = new_version
     __version__ = new_version_string
 
-    for version_file in [VERSION_FILE, DOCS_CONF_FILE]:
-        with open(version_file) as i:
-            version_lines = i.read().split('\n')
+    with open(VERSION_FILE) as i:
+        version_lines = i.read().split('\n')
 
-        for i, l in enumerate(version_lines):
-            if 'version_info' in l:
-                version_lines[i] = '__version_info__ = %r' % (new_version,)
-                break
+    for i, l in enumerate(version_lines):
+        if 'version_info' in l:
+            version_lines[i] = '__version_info__ = %r' % (new_version,)
+            break
 
-        with open(version_file, 'w') as o:
-            o.write('\n'.join(version_lines))
+    with open(VERSION_FILE, 'w') as o:
+        o.write('\n'.join(version_lines))
 
     now = datetime.utcnow()
 
