@@ -12,6 +12,10 @@ from gearman.errors import ProtocolError
 from tests._core_testing import _GearmanAbstractTest
 
 
+class FakeType(object):
+    pass
+
+
 class TestProtocolBinaryCommands(object):
     #######################
     # Begin parsing tests #
@@ -147,8 +151,8 @@ class TestProtocolBinaryCommands(object):
         # Assert we get a non-string argument
         (protocol.GEARMAN_COMMAND_JOB_CREATED, {u"job_handle": 12345}),
 
-        # Assert we get a non-string argument (expecting BYTES)
-        (protocol.GEARMAN_COMMAND_JOB_CREATED, {u"job_handle": u"12345"}),
+        # Assert we get a non-binary argument with any other non-binary type.
+        (protocol.GEARMAN_COMMAND_JOB_CREATED, {u"job_handle": FakeType()}),
 
         # Assert we check for NULLs in all but the "last" argument,
         # where last depends on the cmd_type.
@@ -186,9 +190,13 @@ class TestProtocolBinaryCommands(object):
         packed_command_buffer = protocol.pack_binary_command(cmd_type, cmd_args)
         assert packed_command_buffer == expected_command_buffer
 
-    def test_packing_single_arg(self):
+    @pytest.mark.parametrize('cmd_args, cmd_resp', [
+        ({u"data": b"abcde"}, {u"data": b"abcde"}),
+        ({u"data": "abcde"}, {u"data": b"abcde"}),
+        ({u"data": u"abcde"}, {u"data": b"abcde"}),
+    ])
+    def test_packing_single_arg(self, cmd_args, cmd_resp):
         cmd_type = protocol.GEARMAN_COMMAND_ECHO_REQ
-        cmd_args = {u"data": b"abcde"}
 
         expected_payload_size = len(cmd_args['data'])
         expected_format = '!4sII%ds' % expected_payload_size
@@ -198,8 +206,9 @@ class TestProtocolBinaryCommands(object):
             protocol.MAGIC_REQ_STRING,
             cmd_type,
             expected_payload_size,
-            cmd_args['data']
+            cmd_resp['data'],
         )
+
         packed_command_buffer = protocol.pack_binary_command(cmd_type, cmd_args)
         assert packed_command_buffer == expected_command_buffer
 

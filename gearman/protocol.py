@@ -250,9 +250,9 @@ def pack_binary_command(cmd_type, cmd_args, is_response=False):
 
     for key, value in cmd_args.items():
         if not isinstance(value, compat.binary_type):
-            if isinstance(value, str):
+            if isinstance(value, str) or isinstance(value, compat.unicode_type):
                 # Postel's: Provide Python 2 => Python 3 compatibility.
-                cmd_args[key] = str.encode(value)
+                cmd_args[key] = value.encode()
             else:
                 raise ProtocolError('Received non-binary arguments: %r' % cmd_args)
 
