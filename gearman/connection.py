@@ -8,6 +8,7 @@ import ssl
 import struct
 import time
 
+import gearman.compat as compat
 from gearman.errors import ConnectionError, ProtocolError, ServerUnavailable
 from gearman.constants import DEFAULT_GEARMAN_PORT, _DEBUG_MODE_
 from gearman.protocol import GEARMAN_PARAMS_FOR_COMMAND, GEARMAN_COMMAND_TEXT_COMMAND, NULL_CHAR, \
@@ -234,7 +235,19 @@ class GearmanConnection(object):
             cmd_type, cmd_args = self._outgoing_commands.popleft()
             packed_command = self._pack_command(cmd_type, cmd_args)
             packed_data.append(packed_command)
-        self._outgoing_buffer = b''.join(packed_data)
+        try:
+            self._outgoing_buffer = b''.join(packed_data)
+        except TypeError:
+            # We might be dealing with GEARMAN_COMMAND_TEXT_COMMAND so unpack
+            # that manually and convert its values. I believe we're still okay
+            # to return bytes.
+            self._outgoing_buffer = ""
+            for packed in packed_data:
+                if isinstance(packed, compat.binary_type):
+                    self._outgoing_buffer = "{}{}".format(self._outgoing_buffer, packed.decode("utf-8"))
+                else:
+                    self._outgoing_buffer = "{}{}".format(self._outgoing_buffer, packed)
+            self._outgoing_buffer = bytes(self._outgoing_buffer, "utf-8")
 
     def send_data_to_socket(self):
         """Send data from buffer -> socket
