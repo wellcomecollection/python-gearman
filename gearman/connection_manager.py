@@ -27,7 +27,9 @@ class NoopEncoder(DataEncoder):
     @classmethod
     def _enforce_byte_string(cls, given_object):
         if not isinstance(given_object, compat.binary_type):
-            raise TypeError("Expecting byte string, got %r" % type(given_object))
+            if not isinstance(given_object, str):
+                # Postel's: Provide Python 2 => Python 3 compatibility.
+                raise TypeError("Expecting byte string, got %r" % type(given_object))
 
     @classmethod
     def encode(cls, encodable_object):

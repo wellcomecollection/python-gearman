@@ -8,6 +8,7 @@ PY3 = sys.version_info[0] == 3
 
 if PY3:
     binary_type = bytes
+    unicode_type = str
 
     def array_to_bytes(arr):
         return arr.tobytes()
@@ -20,6 +21,7 @@ if PY3:
 
 else:
     binary_type = str
+    unicode_type = unicode
 
     def array_to_bytes(arr):
         return arr.tostring()
