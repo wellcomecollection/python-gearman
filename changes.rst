@@ -5,6 +5,12 @@ Changelog
 This is a record of all releases of python-gearman3.
 
 ------------------
+0.2.0 - 2020-03-01
+------------------
+
+More fixes for Python 2/3 compatibility.  Thanks Ross Spencer (@ross-spencer) and Artefactual Systems Inc for this contribution.
+
+------------------
 0.1.0 - 2018-12-13
 ------------------
 
