@@ -91,6 +91,8 @@ if __name__ == '__main__':
     )
     subprocess.check_call(['chmod', '400', 'deploy_key'])
 
+    subprocess.check_call(["ssh-keygen", "-lf", "deploy_key"])
+
     print('Release seems good. Pushing to GitHub now.')
 
     tools.create_tag_and_push()
