@@ -64,7 +64,7 @@ def select(rlist, wlist, xlist, timeout=None):
         rd_list, wr_list, ex_list = select_lib.select(*select_args)
     except select_lib.error as exc:
         # Ignore interrupted system call, reraise anything else
-        if exc[0] != errno.EINTR:
+        if exc.errno != errno.EINTR:
             raise
 
     return rd_list, wr_list, ex_list
