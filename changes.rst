@@ -5,6 +5,14 @@ Changelog
 This is a record of all releases of python-gearman3.
 
 ------------------
+0.2.1 - 2021-06-03
+------------------
+
+This release fixes #15, an issue introduced by 595f189 causing pollers to
+perform slower because the event registration was not always reflecting the
+connection state.
+
+------------------
 0.2.0 - 2020-03-01
 ------------------
 
