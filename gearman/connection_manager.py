@@ -1,5 +1,6 @@
 # -*- encoding: utf-8
 
+import errno
 import logging
 
 from . import compat
@@ -190,6 +191,11 @@ class GearmanConnectionManager(object):
             # possible that not all connections have been established yet
             if not conn.gearman_socket:
                 continue
+            try:
+                poller.unregister(conn)
+            except IOError as exc:
+                if exc.errno != errno.ENOENT:
+                    raise
             events = 0
             if conn.readable():
                 events |= gearman.io.READ
@@ -208,7 +214,6 @@ class GearmanConnectionManager(object):
         connection_ok = any(current_connection.connected for current_connection in submitted_connections)
         poller = gearman.io.get_connection_poller()
         if connection_ok:
-            self._register_connections_with_poller(submitted_connections, poller)
             connection_map = {
                 conn.fileno(): conn
                 for conn in submitted_connections
@@ -216,6 +221,8 @@ class GearmanConnectionManager(object):
             }
 
         while connection_ok and callback_ok:
+            self._register_connections_with_poller(submitted_connections, poller)
+
             time_remaining = stopwatch.get_time_remaining()
             if time_remaining == 0.0:
                 break

@@ -151,8 +151,8 @@ def modified_files():
         ['git', 'diff', '--name-only']
     ]:
         diff_output = subprocess.check_output(command).decode('ascii')
-        for l in diff_output.split('\n'):
-            filepath = l.strip()
+        for line in diff_output.split('\n'):
+            filepath = line.strip()
             if filepath:
                 assert os.path.exists(filepath)
                 files.add(filepath)
