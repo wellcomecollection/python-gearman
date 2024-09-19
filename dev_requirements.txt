@@ -4,13 +4,31 @@
 #
 #    pip-compile --output-file dev_requirements.txt dev_requirements.in
 #
-atomicwrites==1.2.1       # via pytest
-attrs==18.2.0             # via hypothesis, pytest
+atomicwrites==1.2.1
+    # via pytest
+attrs==18.2.0
+    # via
+    #   hypothesis
+    #   pytest
 coverage==4.5.1
+    # via
+    #   -r dev_requirements.in
+    #   pytest-cov
 hypothesis==3.76.0
-more-itertools==4.3.0     # via pytest
-pluggy==0.7.1             # via pytest
-py==1.6.0                 # via pytest
-pytest-cov==2.6.0
+    # via -r dev_requirements.in
+more-itertools==4.3.0
+    # via pytest
+pluggy==0.7.1
+    # via pytest
+py==1.11.0
+    # via pytest
 pytest==3.6.4
-six==1.11.0               # via more-itertools, pytest
+    # via
+    #   -r dev_requirements.in
+    #   pytest-cov
+pytest-cov==2.6.0
+    # via -r dev_requirements.in
+six==1.11.0
+    # via
+    #   more-itertools
+    #   pytest
